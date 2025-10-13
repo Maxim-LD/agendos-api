@@ -1,20 +1,20 @@
 import db from "../config/db";
-import { secretConfig } from "../config";
+import { config, secretConfig } from "../config";
 import { AuthRepository } from "../repository/AuthRepository";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateAuthDTO } from "../types/auth";
 import { CreateUserDTO, IUser } from "../types/user";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
+import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { generateToken, verifyToken } from "../utils/token";
-import { comparePassword } from "../utils/hash";
+import { comparePassword, hashPassword } from "../utils/hash";
 import { ILoginResponse } from "../types/api_response";
 import { TokenService } from "./TokenService";
+import { EmailService } from "./EmailService";
 
 export class AuthService {
     private userRepository: UserRepository
     private authRepository: AuthRepository
     private emailSecret = secretConfig.emailSecret
-    private secretKey = secretConfig.secretKey
 
     constructor() {
         this.userRepository = new UserRepository()
@@ -41,12 +41,12 @@ export class AuthService {
             const existingUsername = userInput.username
                 ? await this.userRepository.findByUsername(userInput.username, trx)
                 : null;
-            if (existingUsername) throw new ConflictError("Username already exists!");
+            if (existingUsername) throw new ConflictError("Username already exist!");
 
             const existingPhone = userInput.phone
                 ? await this.userRepository.findByPhone(userInput.phone, trx)
                 : null;
-            if (existingPhone) throw new ConflictError('User phone number already exist!')
+            if (existingPhone) throw new ConflictError('Phone number already exist!')
             
             // 2. Create user
             const newUser = await this.userRepository.createUser(userPayload, trx)
@@ -66,24 +66,15 @@ export class AuthService {
             return newUser
         })    
     }
-    
-    async generateEmailToken(user_id: string, email: string): Promise<string> {
-        const token = generateToken({ user_id, email }, secretConfig.emailSecret, '1h')
-        return token
-    }
 
-    async verifyEmailToken(token: string): Promise<string | null> {
+    async verifyEmailToken(token: string) {
         const payload = verifyToken(token, this.emailSecret)
         const userId = payload.user_id
 
-        await this.userRepository.update(userId, { is_email_verified: true })
-
-        const accessToken = generateToken({ user_id: userId }, this.secretKey, '2h')
-        
-        return accessToken
+        await this.userRepository.update(userId, { is_email_verified: true })        
     }
 
-    async loginUser(key: string, value: string, secret: string): Promise<ILoginResponse> {
+    async handleLogin(key: string, value: string, secret: string): Promise<ILoginResponse> {
         return db.transaction(async (trx) => {
             // 1. Check if user exist
             const user = await this.userRepository.findOne(key, value, trx)
@@ -103,4 +94,75 @@ export class AuthService {
             return { user, accessToken, refreshToken }
         })
     }
+
+    async handleForgotPassword(key: string, value: string): Promise<{ user: IUser, token: string }> {
+        return await db.transaction(async (trx) => {
+            // 1. Check if user exists
+            const user = await this.userRepository.findOne(key, value, trx)
+            if (!user) throw new NotFoundError('Account not found!')
+            
+            // 2. Generate token
+            const { resetToken, resetTokenExpiry } = await TokenService.issueResetToken()
+            const hashedToken = await hashPassword(resetToken)
+
+            // 3. Update auth table
+            await this.authRepository.update(
+                { user_sn: user.sn },
+                {
+                    reset_token: hashedToken,
+                    reset_token_expiry: resetTokenExpiry,
+
+                },
+                trx
+            )
+
+            // 4. Return user and token
+            return { user, token: resetToken }
+        })
+    }
+
+    private async validateResetToken(providedToken: string, storedTokenHash: string | null, expiry: Date | null) {
+        if (!storedTokenHash || !expiry) {
+            throw new BadRequestError('Invalid or expired token.');
+        }
+
+        if (new Date() > expiry) {
+            throw new UnauthorizedError('Token has expired!');
+        }
+
+        const isTokenValid = await comparePassword(providedToken, storedTokenHash);
+        if (!isTokenValid) {
+            throw new UnauthorizedError('Invalid token provided.');
+        }
+    }
+
+    async handleResetPassword(email: string, token: string, secret: string) {
+        return await db.transaction(async (trx) => {
+            // 1. Find the auth record for the user
+            const authRecord = await this.authRepository.findOne('provider_identity', email, trx)
+            if (!authRecord || !authRecord.reset_token || !authRecord.reset_token_expiry) {
+                throw new BadRequestError('No token set for user.')
+            }
+
+            // 2. Validate the reset token against the stored values
+            await this.validateResetToken(token, authRecord.reset_token, authRecord.reset_token_expiry);
+
+            // 3. Hash the new password
+            const newSecret = await hashPassword(secret)
+
+            // 4. Update the password and invalidate the reset token
+            await this.authRepository.update(
+                { user_sn: authRecord.user_sn },
+                {
+                    hashed_secret: newSecret,
+                    reset_token: null, // Invalidate the token after use
+                    reset_token_expiry: null, // Clear the expiry
+
+                },
+                trx
+            )          
+        })
+    }
+
+    
 }
