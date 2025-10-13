@@ -3,14 +3,20 @@ import { dbConfig } from '../config'
 import { logger } from '../utils/logger'
 
 export class DataBaseConnection {
-    private static instance: DataBaseConnection // hold the single db connection instance
+    /** 
+     * @instance: hold the single db connection instance 
+     * @private: can only be called in this class
+     * @static: can only be called with class name i.e DatabaseConnection
+     * 
+    */
+    private static instance: DataBaseConnection 
     private pool: mysql.Pool | null = null
 
     private constructor() {} // Prevents external instantiation using keyword (new)
     
     public static getInstance(): DataBaseConnection {
         /**
-         * Every part of the app asks for the key (pool) using getInstance(),  
+            Every part of the app asks for the key (pool) using getInstance(),  
             and they all get the same one (connection) —no duplicates, no confusion.
         **/ 
         if (!DataBaseConnection.instance) {
