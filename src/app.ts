@@ -1,12 +1,18 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
+import cors from 'cors'
 import router from './router'
 import compression from 'compression'
 import { errorHandler, notFoundHandler } from './middlewares/error_handler'
 import { globalRatelimit } from './middlewares/rate_limiter'
 
 const app = express()
+
+const allowedOrigins = [
+    "http://localhost:3000",
+
+]
 
 // Trust proxy
 app.set('trust proxy', 1);
@@ -17,6 +23,16 @@ app.use(cookieParser())
 
 app.use(compression());
 app.use(morgan('dev'))
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+}))
 
 app.use(globalRatelimit)
 

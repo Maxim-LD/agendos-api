@@ -43,48 +43,50 @@ const registerSchema = Joi.object({
         'any.only': 'Password does not match!'
     }),
     fullname:Joi.string().required(),
-    username: Joi.string().allow('', null).optional(),
-    status: Joi.string().allow('', null).optional(),
-    occupation: Joi.string().allow('', null).optional(),
+    username: Joi.string().trim().empty('').allow(null).optional(),
+    status: Joi.string().trim().empty('').allow(null).optional(),
+    occupation: Joi.string().trim().empty('').allow(null).optional(),
     // profile_picture: Joi.string().uri().allow('', null).optional(),
     phone: Joi.string()
         .trim()
         .pattern(/^(?:\+234|234|0)[789][01]\d{8}$/)
-        .required()
+        .replace(/^(?:\+234|234)/, '0')
         .messages({
-            'string.pattern.base': 'Phone number must be in format 08XXXXXXXXX',
-        }).allow('', null).optional(),
-    date_of_birth: Joi.date().max('now').allow('', null).optional()
+            'string.pattern.base': 'Please enter a valid phone number (e.g., 08012345678)',
+        }).empty('').allow(null).optional(),
+    date_of_birth: Joi.date().max('now').empty('').allow(null).optional()
 })
 
 const loginSchema = Joi.object({
-    email: Joi.string().trim().email().required().messages({
-        "string.email": "Invalid email format!",
-        "any.required": "Email is required!",
-        "string.empty": "Email cannot be empty"
-    }).allow('', null).optional(),
-    phone: Joi.string()
-        .trim()
-        .pattern(/^(?:\+234|234|0)[789][01]\d{8}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone number must be in format 08XXXXXXXXX',
-        }).allow('', null).optional(),
-    username: Joi.string().allow('', null).optional(),
+    identifier: Joi.alternatives().try(
+        Joi.string().trim().email().messages({
+            "string.email": "Invalid email format!",
+            "string.empty": "Email or phone cannot be empty"
+        }),
+        Joi.string()
+            .trim()
+            .pattern(/^(?:\+234|234|0)[789][01]\d{8}$/)
+            .replace(/^(?:\+234|234)/, '0')
+            .messages({
+                'string.pattern.base': 'Please enter a valid phone number (e.g., 08012345678)',
+                "string.empty": "Email or phone cannot be empty"
+            })
+    ).required().messages({
+        "any.required": "Email or phone is required!",
+        "alternatives.match": "Invalid email or phone number format!" // Generic message if neither matches
+    }),
     password: Joi.string()
         .min(6)
-        .pattern(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/)
+        // .pattern(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.&lt;&gt;/?]).+$/)
         .required()
         .messages({
-            "string.min": "Password must be at least 6 characters",
-            "string.empty": "Password cannot be empty",
-            "any.required": "Password is required",
-            "string.pattern.base": "Password must contain letters, numbers, and special characters",
+            "string.min": "Invalid password",
+            // "string.empty": "Invalid password",
+            // "any.required": "Invalid password",
+            // "string.pattern.base": "Invalid password",
         }),
-
-})
-
-    
+});
 
 export const validateRegister = validator(registerSchema, null, null)
 export const validateLogin = validator(loginSchema, null, null)
+

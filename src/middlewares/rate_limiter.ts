@@ -15,7 +15,7 @@ export const globalRatelimit = rateLimit({
 
 export const authRateLimit = rateLimit({
     windowMs: config.rateLimit.windowMS, // 15 minutes
-    max: 5, // limit each IP to 5 requests per windowMs for auth endpoints
+    max: 20, // limit each IP to 5 requests per windowMs for auth endpoints
     message: {
         success: false,
         message: 'Too many authentication attempts, please try again later.'
