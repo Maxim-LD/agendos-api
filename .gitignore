@@ -9,3 +9,4 @@ logs
 .env.development
 .env.production
 
+linkedin_posts.txt

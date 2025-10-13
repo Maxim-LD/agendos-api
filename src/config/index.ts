@@ -8,6 +8,7 @@ interface Config {
     port: number,
     nodeEnv: string,
     baseUrl: string
+    frontendUrl: string
     rateLimit: {
         windowMS: number
         maxRequests: number
@@ -61,7 +62,8 @@ for (const envVar of requiredEnvVars) {
 export const config: Config = {
     port: parseInt(process.env.PORT || '3000', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
-    baseUrl: process.env.BASE_URL || '',
+    baseUrl: process.env.BASE_URL || 'http://localhost:3200/api/v1',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
     redisUrl: process.env.REDIS_URL || '',
 
     rateLimit: {

@@ -9,7 +9,9 @@ export async function up(knex: Knex): Promise<void> {
     table.bigInteger("provider_sn").unsigned().notNullable();
 
     table.string("provider_identity", 255).notNullable();
-    table.string("hashed_secret", 255).nullable(); // password hash or token
+    table.string("hashed_secret", 255).nullable(); // password hash 
+    table.string("reset_token", 255).nullable(); // hashed token
+    table.date("reset_token_expiry").nullable(); 
 
     table.timestamp("created_at").defaultTo(knex.fn.now()).notNullable();
     table.timestamp("updated_at").defaultTo(knex.fn.now()).nullable();
