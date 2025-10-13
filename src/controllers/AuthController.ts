@@ -4,18 +4,17 @@ import { EmailService } from "../services/EmailService";
 import { IApiResponse } from "../types/api_response";
 import { BadRequestError, UnauthorizedError, ValidationError } from "../utils/errors";
 
+
 export class AuthController {
     private authService: AuthService
-    private emailService: EmailService
 
     constructor() {
         this.authService = new AuthService()
-        this.emailService = new EmailService()
     }
 
     signUp = asyncHandler(async (req, res): Promise<void> => {
-        const { email, password, confirm_password, username, fullname, status, occupation, phone, date_of_birth } = req.body
-        
+        const { email, password, confirm_password, fullname, status, occupation, date_of_birth, username, phone } = req.body
+
         if (password !== confirm_password) throw new BadRequestError('Passwords does not match!')
 
         const user = await this.authService.registerUser({
@@ -28,7 +27,7 @@ export class AuthController {
         if (!user) throw new Error()
                 
         // Send verification email
-        await this.emailService.sendVerificationEmail(user)
+        await EmailService.sendVerificationMail(user)
 
         const response: IApiResponse = {
             success: true,
@@ -47,13 +46,12 @@ export class AuthController {
         const tokenValue = Array.isArray(token) ? token[0] : token;
         if (typeof tokenValue !== 'string') throw new BadRequestError('Invalid token format')
             
-        const accessToken = await this.authService.verifyEmailToken(tokenValue)
-        if (!accessToken) throw new UnauthorizedError('Verification Failed')
+        await this.authService.verifyEmailToken(tokenValue)
             
         return res.status(200).json({
             success: true,
             message: 'User verified successfully',
-            accessToken
+            // accessToken
         })
         
         // res.cookie('access_token', accessToken, {
@@ -65,36 +63,63 @@ export class AuthController {
         // res.redirect(`${config.frontendUrl}/dashboard`);
     })
 
-    login = asyncHandler(async (req, res) => {
-        const { email, phone, username, password } = req.body
+    login = asyncHandler(async (req: any, res: any): Promise<void> => {
+        const { identifier, password } = req.body;
 
-        let result 
-        if (email) {
-            result = await this.authService.loginUser('email' , email, password)
-        } else if (phone) {
-            result = await this.authService.loginUser('phone', phone, password)
+        let user;
+        if (identifier.includes('@')) {
+            user = await this.authService.handleLogin('email', identifier, password);
+        } else if (identifier) {
+            user = await this.authService.handleLogin('phone', identifier, password);
         } else {
-            result = await this.authService.loginUser('username', username, password)
+            throw new UnauthorizedError("Invalid credentials.");
         }
-
-        // if (!result) throw new Error()
         
         // Store refresh token in cookies
-        res.cookie("refresh-token", result.refreshToken, {
+        res.cookie("refresh-token", user.refreshToken, {
             httpOnly: true,
             secure: true,
             sameSite: "strict",
             path: '/'
-        })
+        });
             
         return res.status(200).json({
             success: true,
             message: 'User logged in successfully',
             data: {
-                user: result.user,
-                accessToken: result.accessToken
+                user: user.user,
+                accessToken: user.accessToken
             }
+        });
+    })
+
+    forgotPasswordLink = asyncHandler(async (req, res) => {
+        const { email } = req.body
+
+        let result: { user: any; token: string; };
+        if (email) {
+            result = await this.authService.handleForgotPassword('email', email)
+        } else {
+            throw new UnauthorizedError('Invalid user')
+        }
+
+        await EmailService.sendResetPaswordMail(result.user, result.token)
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password reset link sent successfully.',
+        });
+
+    })
+
+    resetPassword = asyncHandler(async (req, res) => {
+        const { email, resetToken, newPassword } = req.body
+
+        await this.authService.handleResetPassword(email, resetToken, newPassword)
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password reset successfully.'
         })
     })
 }
-

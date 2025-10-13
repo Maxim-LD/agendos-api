@@ -1,4 +1,3 @@
-import { Knex } from "knex";
 import { CreateAuthDTO, IAuth } from "../types/auth";
 import { hashPassword } from "../utils/hash";
 import { BaseRepository } from "./BaseRepository";
@@ -31,5 +30,5 @@ export class AuthRepository extends BaseRepository<IAuth> {
     
             return await this.create(authdata, trx)
         })
-    }  
+    }
 }

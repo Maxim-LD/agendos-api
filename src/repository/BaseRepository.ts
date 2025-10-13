@@ -41,19 +41,16 @@ export abstract class BaseRepository<T> { // This class marked (abstract) is not
         return result || null;
     }
 
-    async update(id: string, data: Partial<T>, trx?: Knex.Transaction): Promise<T | null> {
+    async update(conditions: Partial<T>, data: Partial<T>, trx?: Knex.Transaction): Promise<number> {
         const query = this.db(this.tableName)
-            .where({ id })
-            .update({ ...data, updated_at: new Date() });
-
+            .where(conditions)
+            .update({
+                ...data,
+                updated_at: new Date()
+            });
+    
         if (trx) query.transacting(trx);
-        await query;
-
-        const selectQuery = this.db(this.tableName).where({ id }).first();
-        if (trx) selectQuery.transacting(trx);
-        const result = await selectQuery;
-
-        return result || null;
+        return await query;
     }
 
     async findAll(
