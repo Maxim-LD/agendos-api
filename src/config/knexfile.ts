@@ -4,10 +4,7 @@ import { dbConfig } from "../config"
 const knexConfig: { [key: string]: Knex.Config } = {
     development: {
         client: 'mysql2',
-        connection: {
-            ...dbConfig.database,
-            timezone: 'UTC'
-        },
+        connection: dbConfig.database,
         pool: {
             min: 2,
             max: 10,
@@ -22,14 +19,11 @@ const knexConfig: { [key: string]: Knex.Config } = {
         seeds: {
             directory: './src/database/seeds',
             extension: 'ts'
-        },
+        }
     },
     production: {
         client: 'mysql2',
-        connection: {
-            ...dbConfig.database,
-            timezone: 'UTC'
-        },
+        connection: dbConfig.database,
         pool: {
             min: 2,
             max: 10,

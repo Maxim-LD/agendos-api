@@ -36,7 +36,11 @@ export class TokenService {
 
     static async issueResetToken() {
         const resetToken = crypto.randomBytes(32).toString('hex')
-        const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 15); // 
+        const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 15); 
+
+        console.log(typeof resetTokenExpiry);
+        console.log(typeof resetToken);
+        
 
         return { resetToken, resetTokenExpiry }
     }
