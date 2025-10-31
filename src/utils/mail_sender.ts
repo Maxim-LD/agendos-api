@@ -1,8 +1,15 @@
 import nodemailer from 'nodemailer'
 import { config } from '../config'
 import { logger } from './logger'
+import { Knex } from 'knex'
 
-export const sendEmail = async (to: string, subject: string, html: string): Promise<void> => {
+export interface SendMailOptions {
+    to: string
+    subject: string
+    html: string
+}
+
+export const sendEmail = async (options: SendMailOptions, trx?: Knex.Transaction): Promise<void> => {
     try {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -14,9 +21,9 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
 
         const mailOptions = {
             from: `'AGENDOS' <${config.smtp.email}>`,
-            to,
-            subject,
-            html
+            to: options.to,
+            subject: options.subject,
+            html: options.html
         }
 
         const info = await transporter.sendMail(mailOptions)
@@ -24,6 +31,9 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
 
     } catch (error) {
         if (error instanceof Error) {
+            if (trx) {
+                // The error will be caught by the transaction block and trigger a rollback.
+            }
             throw new Error(` Email send failed: ${error.message}`)
         }
         throw error
