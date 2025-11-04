@@ -7,7 +7,7 @@ import { CreateUserDTO, IUser } from "../types/user";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { generateToken, verifyToken } from "../utils/token";
 import { comparePassword, hashPassword } from "../utils/hash";
-import { ILoginResponse } from "../types/api_response";
+import { IApiResponse, ILoginResponse } from "../types/api_response";
 import { TokenService } from "./TokenService";
 import { EmailService } from "./EmailService";
 
@@ -21,7 +21,7 @@ export class AuthService {
         this.authRepository = new AuthRepository()
     }
 
-    async registerUser(userInput: CreateUserDTO): Promise<IUser | null> {
+    async registerUser(userInput: CreateUserDTO): Promise<IUser> {
         return await db.transaction(async (trx) => {  
             
             const userPayload: CreateUserDTO  = {
@@ -63,6 +63,9 @@ export class AuthService {
             }
             await this.authRepository.createAuthRecord(authInput)
 
+            // Send verification email
+            await EmailService.sendVerificationMail(newUser, trx)
+
             return newUser
         })    
     }
@@ -95,7 +98,7 @@ export class AuthService {
         })
     }
 
-    async handleForgotPassword(key: string, value: string): Promise<{ user: IUser, token: string }> {
+    async handleForgotPassword(key: string, value: string): Promise<void> {
         return await db.transaction(async (trx) => {
             // 1. Check if user exists
             const user = await this.userRepository.findOne(key, value, trx)
@@ -116,8 +119,8 @@ export class AuthService {
                 trx
             )
 
-            // 4. Return user and token
-            return { user, token: resetToken }
+            // 4. Send reset password email
+            await EmailService.sendResetPaswordMail(user, resetToken, trx);
         })
     }
 

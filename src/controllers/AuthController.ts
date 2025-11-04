@@ -25,9 +25,6 @@ export class AuthController {
         })
 
         if (!user) throw new Error()
-                
-        // Send verification email
-        await EmailService.sendVerificationMail(user)
 
         const response: IApiResponse = {
             success: true,
@@ -37,6 +34,11 @@ export class AuthController {
 
         res.status(201).json(response)
 
+    })
+
+    resendEmailVerification = asyncHandler(async (req, res): Promise<void> => {
+        const { email } = req.body
+    
     })
 
     verifyUser = asyncHandler(async (req, res) => {
@@ -51,7 +53,6 @@ export class AuthController {
         return res.status(200).json({
             success: true,
             message: 'User verified successfully',
-            // accessToken
         })
         
         // res.cookie('access_token', accessToken, {
@@ -59,8 +60,6 @@ export class AuthController {
         //     secure: true,
         //     sameSite: 'strict'
         // });
-
-        // res.redirect(`${config.frontendUrl}/dashboard`);
     })
 
     login = asyncHandler(async (req: any, res: any): Promise<void> => {
@@ -96,14 +95,11 @@ export class AuthController {
     forgotPasswordLink = asyncHandler(async (req, res) => {
         const { email } = req.body
 
-        let result: { user: any; token: string; };
         if (email) {
-            result = await this.authService.handleForgotPassword('email', email)
+            await this.authService.handleForgotPassword('email', email)
         } else {
             throw new UnauthorizedError('Invalid user')
         }
-
-        await EmailService.sendResetPaswordMail(result.user, result.token)
 
         return res.status(200).json({
             success: true,

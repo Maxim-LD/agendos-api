@@ -40,14 +40,14 @@ Request flow: Client → Controller → Service → Repository → Database
 Requirements:
 
 - Node.js 18+ (or compatible)
-- npm
+- pnpm
 - MySQL
 - Redis
 
 1. Install dependencies
 
 ```powershell
-npm install
+pnpm install
 ```
 
 2. Copy the example env (create a `.env` file at the project root) and set the values for your environment. See the `Environment variables` section below for required keys.
@@ -162,7 +162,7 @@ Redis is used for caching and storing refresh tokens. Configure the connection w
 
 ## Testing
 
-The docs mention Jest, but there are no tests included in the repo at the moment. Add tests under `__tests__` or a `tests/` folder and wire Jest if needed.
+Tests are written with Jest and are located inside the `src/tests` directory. You can run the test suite using the `pnpm test` command.
 
 ---
 
