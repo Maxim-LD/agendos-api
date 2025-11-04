@@ -82,5 +82,5 @@
   "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   }
 ,
-  "include": ["src", "src/tests"]
+  "include": ["src"]
 }
