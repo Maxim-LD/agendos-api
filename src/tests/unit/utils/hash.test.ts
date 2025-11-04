@@ -1,4 +1,4 @@
-import { hashPassword, comparePassword } from '../../../src/utils/hash';
+import { hashPassword, comparePassword } from '../../../utils/hash';
 import bcrypt from 'bcrypt';
 
 describe('Password Hashing and Comparison', () => {

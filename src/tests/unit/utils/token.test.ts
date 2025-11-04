@@ -1,4 +1,4 @@
-import { generateToken, verifyToken } from '../../../src/utils/token'
+import { generateToken, verifyToken } from '../../../utils/token'
 import jwt from 'jsonwebtoken';
 /**
  * This is to test the functionality of the fn in question 
