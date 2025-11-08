@@ -1,6 +1,5 @@
 import { asyncHandler } from "../middlewares/error_handler";
 import { AuthService } from "../services/AuthService";
-import { EmailService } from "../services/EmailService";
 import { IApiResponse } from "../types/api_response";
 import { BadRequestError, UnauthorizedError, ValidationError } from "../utils/errors";
 
