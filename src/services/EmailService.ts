@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { renderTemplate } from "../templates/renderTemplates";
+import { logger } from "../utils/logger";
 import { IUser } from "../types/user";
 import { sendEmail, SendMailOptions } from "../utils/mail_sender";
 import { TokenService } from "./TokenService";
@@ -9,22 +10,26 @@ export class EmailService {
     constructor() {}
     
     static async sendVerificationMail(user: IUser, trx?: Knex.Transaction) {
-        const token = await TokenService.issueEmailToken({ user_id: user.id, email: user.email })
-        const verificationLink = `${config.baseUrl}/auth/verify-email?token=${token}`;
-        
-        const html = renderTemplate('signup', {
-            name: user.fullname,
-            link: verificationLink,
-            year: new Date().getFullYear().toString()
-        })
+        try {
+            const token = await TokenService.issueEmailToken({ user_id: user.id, email: user.email })
+            const verificationLink = `${config.baseUrl}/auth/verify-email?token=${token}`;
+            
+            const html = renderTemplate('signup', {
+                name: user.fullname,
+                link: verificationLink,
+                year: new Date().getFullYear().toString()
+            })
 
-        const mailOptions: SendMailOptions = {
-            to: user.email,
-            subject: 'Verify Your Email', 
-            html
+            const mailOptions: SendMailOptions = {
+                to: user.email,
+                subject: 'Verify Your Email', 
+                html
+            }
+
+            await sendEmail(mailOptions, trx)
+        } catch (error: any) {
+            logger.warn(`Failed to send verification email to ${user.email}: ${error.message}`);
         }
-
-        await sendEmail(mailOptions, trx)
     }
 
     static async sendResetPaswordMail(user: IUser, token: string, trx?: Knex.Transaction) {
