@@ -114,7 +114,6 @@ export class AuthService {
                 {
                     reset_token: hashedToken,
                     reset_token_expiry: resetTokenExpiry,
-
                 },
                 trx
             )
