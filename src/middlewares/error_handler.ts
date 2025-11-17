@@ -41,7 +41,7 @@ export const errorHandler = (error: Error, req: Request, res: Response, next: Ne
     if (config.nodeEnv === 'development' || !isOperational) {
         // The logger is configured with format.errors({ stack: true }), so it will automatically handle the stack.
         logger.error(`Error`, {
-            error,
+            error: error.stack,
             // url: req.url,
             // method: req.method,
             ip: req.ip,
