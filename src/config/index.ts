@@ -16,6 +16,7 @@ interface Config {
     smtp: {
         email: string
         password: string
+        secure: boolean
     },
     redisUrl: string
 }
@@ -72,7 +73,8 @@ export const config: Config = {
     },
     smtp: {
         email: process.env.SMTP_EMAIL || '',
-        password: process.env.SMTP_PASSWORD || ''
+        password: process.env.SMTP_PASSWORD || '',
+        secure: process.env.SMTP_SECURE === 'true'
     }
 }
 
