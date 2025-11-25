@@ -1,14 +1,19 @@
-import { asyncHandler } from "../middlewares/error_handler";
+import { config } from "../config";
+import { AuthRequest } from "../middlewares/auth-middleware";
+import { asyncHandler } from "../middlewares/error-handler";
 import { AuthService } from "../services/AuthService";
-import { IApiResponse } from "../types/api_response";
+import { TokenService } from "../services/TokenService";
+import { IApiResponse } from "../types/api-response";
 import { BadRequestError, UnauthorizedError, ValidationError } from "../utils/errors";
 
 
 export class AuthController {
     private authService: AuthService
+    private tokenService: TokenService
 
     constructor() {
         this.authService = new AuthService()
+        this.tokenService = new TokenService()
     }
 
     signUp = asyncHandler(async (req, res): Promise<void> => {
@@ -35,32 +40,6 @@ export class AuthController {
 
     })
 
-    resendEmailVerification = asyncHandler(async (req, res): Promise<void> => {
-        const { email } = req.body
-    
-    })
-
-    verifyUser = asyncHandler(async (req, res) => {
-        const { token } = req.query
-        if (!token) throw new ValidationError('Token is required!')
-            
-        const tokenValue = Array.isArray(token) ? token[0] : token;
-        if (typeof tokenValue !== 'string') throw new BadRequestError('Invalid token format')
-            
-        await this.authService.verifyEmailToken(tokenValue)
-            
-        return res.status(200).json({
-            success: true,
-            message: 'User verified successfully',
-        })
-        
-        // res.cookie('access_token', accessToken, {
-        //     httpOnly: true,
-        //     secure: true,
-        //     sameSite: 'strict'
-        // });
-    })
-
     login = asyncHandler(async (req: any, res: any): Promise<void> => {
         const { identifier, password } = req.body;
 
@@ -72,12 +51,14 @@ export class AuthController {
         } else {
             throw new UnauthorizedError("Invalid credentials.");
         }
+
+        const isProduction = config.nodeEnv === 'production'
         
         // Store refresh token in cookies
         res.cookie("refresh-token", user.refreshToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: "strict",
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             path: '/'
         });
             
@@ -116,5 +97,46 @@ export class AuthController {
             success: true,
             message: 'Password reset successfully.'
         })
+    })
+
+    requestEmailVerification = asyncHandler(async (req, res) => {
+        const { email } = req.body
+        
+        await this.authService.handleEmailVerification(email)
+
+        return res.status(200).json({
+            success: true,
+            message: 'Verification email sent successfully!',
+        })
+
+    })
+
+    verifyUserEmail = asyncHandler(async (req, res) => {
+        const { token } = req.query
+        if (!token) throw new ValidationError('Token is required!')
+            
+        const tokenValue = Array.isArray(token) ? token[0] : token;
+        if (typeof tokenValue !== 'string') throw new BadRequestError('Invalid token format')
+            
+        await this.authService.verifyEmailToken(tokenValue)
+            
+        return res.status(200).json({
+            success: true,
+            message: 'Email verified successfully',
+        })
+    })
+
+    refreshAccessToken = asyncHandler(async (req, res) => {
+        const refreshToken = req.cookies['refresh-token']
+        if (!refreshToken) throw new UnauthorizedError('Token is required!')
+        
+        const { user, token } = await TokenService.handleRefreshAccessToken(refreshToken)
+
+        return res.status(200).json({
+            success: true,
+            message: "New access token generated successfully",
+            data: { user, token }
+        })
+        
     })
 }

@@ -1,11 +1,12 @@
 import crypto from 'crypto'
 import { secretConfig } from "../config";
-import { setCache } from "../utils/caching";
-import { generateToken } from "../utils/token";
-import { hashPassword } from '../utils/hash';
+import { getCache, setCache } from "../utils/caching";
+import { generateToken, verifyToken } from "../utils/token";
+import { ForbiddenError, InvalidTokenError } from '../utils/errors';
+import { UserRepository } from '../repository/UserRepository';
 
 export class TokenService {
-  /**
+    /**
    * @usage can only be called with classname because it is static
    * @param user
    * @returns accessToken and refreshToken
@@ -20,7 +21,7 @@ export class TokenService {
         const accessToken = generateToken(
             { user_id: user.id, email: user.email },
             secretConfig.secretKey,
-            '30'
+            '30m'
         );
         
         const refreshToken = generateToken(
@@ -46,5 +47,23 @@ export class TokenService {
         const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 15);     
 
         return { resetToken, resetTokenExpiry }
+    }
+
+    static async handleRefreshAccessToken(token: string) {
+        const decoded = verifyToken(token, secretConfig.refreshSecret)
+
+        const cachedToken = await getCache(`refresh-token:${decoded.user_id}`)
+        if (!cachedToken || cachedToken !== token ) throw new InvalidTokenError('Invalid refresh token!')
+        
+        const newToken = generateToken(
+            { user_id: decoded.user_id, email: decoded.email },
+            secretConfig.secretKey,
+            '30m'
+        )
+
+        const dbUser = await new UserRepository().findById(decoded.user_id)
+        if (!dbUser) throw new ForbiddenError('Invalid user!')
+        
+        return { user: dbUser, token: newToken }
     }
 }

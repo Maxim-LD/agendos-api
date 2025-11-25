@@ -1,5 +1,5 @@
 import db from "../config/db";
-import { config, secretConfig } from "../config";
+import { secretConfig } from "../config";
 import { AuthRepository } from "../repository/AuthRepository";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateAuthDTO } from "../types/auth";
@@ -7,7 +7,7 @@ import { CreateUserDTO, IUser } from "../types/user";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { generateToken, verifyToken } from "../utils/token";
 import { comparePassword, hashPassword } from "../utils/hash";
-import { IApiResponse, ILoginResponse } from "../types/api_response";
+import { IApiResponse, ILoginResponse } from "../types/api-response";
 import { TokenService } from "./TokenService";
 import { EmailService } from "./EmailService";
 
@@ -35,16 +35,16 @@ export class AuthService {
             };
             
             // 1. Check if user exists
-            const existingUser = await this.userRepository.findByEmail(userInput.email, trx)
+            const existingUser = await this.userRepository.findBy('email', userInput.email, trx)
             if (existingUser) throw new ConflictError('User email already exist!')
                 
             const existingUsername = userInput.username
-                ? await this.userRepository.findByUsername(userInput.username, trx)
+                ? await this.userRepository.findBy('username', userInput.username, trx)
                 : null;
             if (existingUsername) throw new ConflictError("Username already exist!");
 
             const existingPhone = userInput.phone
-                ? await this.userRepository.findByPhone(userInput.phone, trx)
+                ? await this.userRepository.findBy('phone', userInput.phone, trx)
                 : null;
             if (existingPhone) throw new ConflictError('Phone number already exist!')
             
@@ -61,20 +61,27 @@ export class AuthService {
                 provider_identity: userInput.email,
                 secret: userInput.password
             }
+
             await this.authRepository.createAuthRecord(authInput)
 
-            // Send verification email
-            await EmailService.sendVerificationMail(newUser, trx)
+            // Send welcome email
+            await EmailService.sendWelcomeEmail(newUser)
 
             return newUser
         })    
     }
 
-    async verifyEmailToken(token: string) {
-        const payload = verifyToken(token, this.emailSecret)
+    async verifyEmailToken(emailToken: string) {
+        const payload = verifyToken(emailToken, this.emailSecret)
         const userId = payload.user_id
 
-        await this.userRepository.update(userId, { is_email_verified: true })        
+        // Check if user is verified
+        const user = await this.userRepository.findById(userId)
+        if (user?.is_email_verified === true) {
+            throw new BadRequestError('Email already verified')
+        }
+
+        await this.userRepository.update({ id: userId }, { is_email_verified: true })        
     }
 
     async handleLogin(key: string, value: string, secret: string): Promise<ILoginResponse> {
@@ -157,13 +164,19 @@ export class AuthService {
                 { user_sn: authRecord.user_sn },
                 {
                     hashed_secret: newSecret,
-                    reset_token: null, // Invalidate the token after use
-                    reset_token_expiry: null, // Clear the expiry
-
+                    reset_token: null,
+                    reset_token_expiry: null,
                 },
                 trx
             )          
         })
+    }
+
+    async handleEmailVerification(email: string) {
+        const user = await this.userRepository.findBy('email', email)
+        if (!user) throw new NotFoundError('Account not found!')
+        
+        await EmailService.sendVerificationMail(user)
     }
 
     

@@ -9,27 +9,45 @@ import { Knex } from "knex";
 export class EmailService {
     constructor() {}
     
-    static async sendVerificationMail(user: IUser, trx?: Knex.Transaction) {
+    static async sendWelcomeEmail(user: IUser) {
         try {
-            const token = await TokenService.issueEmailToken({ user_id: user.id, email: user.email })
-            const verificationLink = `${config.baseUrl}/auth/verify-email?token=${token}`;
-            
+            const loginLink = `${config.frontendUrl}/auth/login`
+
             const html = renderTemplate('signup', {
                 name: user.fullname,
-                link: verificationLink,
+                link: loginLink,
                 year: new Date().getFullYear().toString()
             })
 
             const mailOptions: SendMailOptions = {
                 to: user.email,
-                subject: 'Verify Your Email', 
-                html
+                subject: 'Welcome to Agendos!',
+                html: html
             }
 
-            await sendEmail(mailOptions, trx)
-        } catch (error: any) {
-            logger.warn(`Failed to send verification email to ${user.email}: ${error.message}`);
+            await sendEmail(mailOptions)
+          } catch (error: any) {
+            logger.warn(`Failed to send welcome email to ${user.email}: ${error.message}`);
         }
+    }
+
+    static async sendVerificationMail(user: IUser, trx?: Knex.Transaction) {
+        const token = await TokenService.issueEmailToken({ user_id: user.id, email: user.email })
+        const verificationLink = `${config.baseUrl}/auth/verify-email?token=${token}`;
+        
+        const html = renderTemplate('verify-email', {
+            name: user.fullname,
+            link: verificationLink,
+            year: new Date().getFullYear().toString()
+        })
+
+        const mailOptions: SendMailOptions = {
+            to: user.email,
+            subject: 'Verify Your Email', 
+            html
+        }
+
+        await sendEmail(mailOptions, trx)
     }
 
     static async sendResetPaswordMail(user: IUser, token: string, trx?: Knex.Transaction) {

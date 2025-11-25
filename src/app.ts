@@ -4,8 +4,8 @@ import morgan from 'morgan'
 import cors from 'cors'
 import router from './router'
 import compression from 'compression'
-import { errorHandler, notFoundHandler } from './middlewares/error_handler'
-import { globalRatelimit } from './middlewares/rate_limiter'
+import { errorHandler, notFoundHandler } from './middlewares/error-handler'
+import { globalRatelimit } from './middlewares/rate-limiter'
 
 const app = express()
 

@@ -1,4 +1,5 @@
-import jwt, { JwtPayload } from 'jsonwebtoken'
+import jwt, { JsonWebTokenError, JwtPayload } from 'jsonwebtoken'
+import { InvalidTokenError } from './errors'
 
 export const generateToken = (
     payload: Record<string, any>,
@@ -18,10 +19,17 @@ export const generateToken = (
 }
 
 export const verifyToken = (token: string, secretKey: string): JwtPayload => {
-    const decoded = jwt.verify(token, secretKey)    
+    try {
+        const decoded = jwt.verify(token, secretKey);
 
-    if (typeof decoded === 'string') {
-        throw new Error('Invalid token payload!')
+        if (typeof decoded === 'string') {
+            throw new InvalidTokenError('Invalid token payload!');
+        }
+        return decoded;
+    } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            throw new InvalidTokenError('Token has expired. Please log in again.');
+        }
+        throw new InvalidTokenError();
     }
-    return decoded
 }

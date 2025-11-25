@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { IApiResponse } from "../types/api_response"
+import { IApiResponse } from "../types/api-response"
 import { AppError } from "../utils/errors"
 import { config } from "../config"
 import { logger } from "../utils/logger"

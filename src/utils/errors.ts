@@ -48,7 +48,13 @@ export class UnauthorizedError extends AppError {
 }
 
 export class ForbiddenError extends AppError {
-    constructor(message: 'Access forbidden') {
+    constructor(message: string = 'Access forbidden') {
         super(message, 403, 'FORBIDDEN')
+    }
+}
+
+export class InvalidTokenError extends AppError {
+    constructor(message: string = 'Invalid or malformed token') {
+        super(message, 401, 'INVALID_TOKEN');
     }
 }
