@@ -60,6 +60,9 @@ importers:
         specifier: ^3.17.0
         version: 3.18.3
     devDependencies:
+      '@express-rate-limit/tsconfig':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
@@ -423,6 +426,9 @@ packages:
 
   '@epic-web/invariant@1.0.0':
     resolution: {integrity: sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==}
+
+  '@express-rate-limit/tsconfig@1.0.2':
+    resolution: {integrity: sha512-BMSuJSe5fITRUZRLModNIXOTjVP4TcqOXO7ohW5OwtHNNGJ48HvaKH6zuqP8CjEEcbUmjheXk9rSYUF3tDu0tA==}
 
   '@hapi/address@5.1.1':
     resolution: {integrity: sha512-A+po2d/dVoY7cYajycYI43ZbYMXukuopIsqCjh5QzsBCipDtdofHntljDlpccMjIfTy6UOkg+5KPriwYch2bXA==}
@@ -3133,6 +3139,8 @@ snapshots:
       kuler: 2.0.0
 
   '@epic-web/invariant@1.0.0': {}
+
+  '@express-rate-limit/tsconfig@1.0.2': {}
 
   '@hapi/address@5.1.1':
     dependencies:
