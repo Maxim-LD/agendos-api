@@ -12,7 +12,7 @@ export class TokenService {
    * @returns accessToken and refreshToken
    */
     static async issueAuthTokens(user: { id: string; email: string }) {
-        const { accessToken, refreshToken } = this.buildTokens(user); // call private static
+        const { accessToken, refreshToken } = this.buildTokens(user); // call private static fn
         await setCache(`refresh-token:${user.id}`, refreshToken, secretConfig.refreshTokenExpiry);
         return { accessToken, refreshToken };
     }

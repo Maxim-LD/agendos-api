@@ -5,9 +5,9 @@ import { UserRepository } from "../repository/UserRepository";
 import { CreateAuthDTO } from "../types/auth";
 import { CreateUserDTO, IUser } from "../types/user";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
-import { generateToken, verifyToken } from "../utils/token";
+import { verifyToken } from "../utils/token";
 import { comparePassword, hashPassword } from "../utils/hash";
-import { IApiResponse, ILoginResponse } from "../types/api-response";
+import { ILoginResponse } from "../types/api-response";
 import { TokenService } from "./TokenService";
 import { EmailService } from "./EmailService";
 
@@ -69,19 +69,6 @@ export class AuthService {
 
             return newUser
         })    
-    }
-
-    async verifyEmailToken(emailToken: string) {
-        const payload = verifyToken(emailToken, this.emailSecret)
-        const userId = payload.user_id
-
-        // Check if user is verified
-        const user = await this.userRepository.findById(userId)
-        if (user?.is_email_verified === true) {
-            throw new BadRequestError('Email already verified')
-        }
-
-        await this.userRepository.update({ id: userId }, { is_email_verified: true })        
     }
 
     async handleLogin(key: string, value: string, secret: string): Promise<ILoginResponse> {
@@ -176,8 +163,18 @@ export class AuthService {
         const user = await this.userRepository.findBy('email', email)
         if (!user) throw new NotFoundError('Account not found!')
         
+        if (user.is_email_verified) {
+            throw new ConflictError('Email already verified')
+        }
+
         await EmailService.sendVerificationMail(user)
     }
 
+    async verifyEmailToken(emailToken: string) {
+        const payload = verifyToken(emailToken, this.emailSecret)
+        const userId = payload.user_id
+
+        await this.userRepository.update({ id: userId }, { is_email_verified: true })        
+    }
     
 }

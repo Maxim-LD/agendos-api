@@ -34,7 +34,7 @@ export const sendEmail = async (options: SendMailOptions, trx?: Knex.Transaction
             if (trx) {
                 // The error will be caught by the transaction block and trigger a rollback.
             }
-            throw new Error(` Email send failed: ${error.message}`)
+            throw new Error(`Email send failed: ${error.message}`)
         }
         throw error
     }
