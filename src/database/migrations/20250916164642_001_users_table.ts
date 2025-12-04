@@ -10,6 +10,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("status", 50).nullable();
     table.string("occupation", 100).nullable();
     table.string("phone", 50).nullable();
+    table.string("profile_picture", 50).nullable();
     table.date("date_of_birth").nullable();
 
     // Verification flags
@@ -18,6 +19,9 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamp("created_at").defaultTo(knex.fn.now()).notNullable();
     table.timestamp("updated_at").defaultTo(knex.fn.now()).nullable();
+
+    // Task related
+    table.string("maximum_daily_capacity").nullable().defaultTo(8) // hours
 
     // Unique constraints
     table.unique(["email"], "users_email_unique");
