@@ -17,7 +17,7 @@ export class AuthService {
     private emailSecret = secretConfig.emailSecret
 
     constructor() {
-        this.userRepository = new UserRepository()
+        this.userRepository = new UserRepository() // instance of the UserRepository class
         this.authRepository = new AuthRepository()
     }
 
@@ -25,34 +25,17 @@ export class AuthService {
         return await db.transaction(async (trx) => {  
             
             const userPayload: CreateUserDTO  = {
-                email: userInput.email,
-                username: userInput.username,
                 fullname: userInput.fullname,
-                status: userInput.status,
-                occupation: userInput.occupation,
-                phone: userInput.phone,
-                date_of_birth: userInput.date_of_birth
+                email: userInput.email,
             };
             
             // 1. Check if user exists
             const existingUser = await this.userRepository.findBy('email', userInput.email, trx)
             if (existingUser) throw new ConflictError('User email already exist!')
-                
-            const existingUsername = userInput.username
-                ? await this.userRepository.findBy('username', userInput.username, trx)
-                : null;
-            if (existingUsername) throw new ConflictError("Username already exist!");
-
-            const existingPhone = userInput.phone
-                ? await this.userRepository.findBy('phone', userInput.phone, trx)
-                : null;
-            if (existingPhone) throw new ConflictError('Phone number already exist!')
-            
+                         
             // 2. Create user
             const newUser = await this.userRepository.createUser(userPayload, trx)
-            if (!newUser) {
-                throw new Error("User creation failed");
-            }           
+            if (!newUser) throw new BadRequestError("User creation failed");
 
             // 3. Create auth record
             const authInput: CreateAuthDTO = {
@@ -171,10 +154,17 @@ export class AuthService {
     }
 
     async verifyEmailToken(emailToken: string) {
-        const payload = verifyToken(emailToken, this.emailSecret)
-        const userId = payload.user_id
-
-        await this.userRepository.update({ id: userId }, { is_email_verified: true })        
+        return await db.transaction(async (trx) => {
+            
+            const payload = verifyToken(emailToken, this.emailSecret)
+            const userId = payload.user_id
+    
+            await this.userRepository.update(
+                { id: userId },
+                { is_email_verified: true },
+                trx
+            )        
+        })
     }
     
 }

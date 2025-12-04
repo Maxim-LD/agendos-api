@@ -3,36 +3,63 @@ import { AuthRequest } from "../middlewares/auth-middleware";
 import { asyncHandler } from "../middlewares/error-handler";
 import { AuthService } from "../services/AuthService";
 import { TokenService } from "../services/TokenService";
+import { UserService } from "../services/UserService";
 import { IApiResponse } from "../types/api-response";
+import { CreateProfileDTO, UpdateUserDTO } from "../types/user";
 import { BadRequestError, UnauthorizedError, ValidationError } from "../utils/errors";
 
 
 export class AuthController {
     private authService: AuthService
+    private userService: UserService
     private tokenService: TokenService
 
     constructor() {
         this.authService = new AuthService()
+        this.userService = new UserService()
         this.tokenService = new TokenService()
     }
 
     signUp = asyncHandler(async (req, res): Promise<void> => {
-        const { email, password, confirm_password, fullname, status, occupation, date_of_birth, username, phone } = req.body
+        const { fullname, email, password, confirm_password } = req.body
 
         if (password !== confirm_password) throw new BadRequestError('Passwords does not match!')
 
         const user = await this.authService.registerUser({
-            email, password,
-            username, fullname,
-            status, occupation,
-            phone, date_of_birth
+            fullname,
+            email,
+            password,
         })
 
-        if (!user) throw new Error()
+        if (!user) throw new BadRequestError('User account creation failed!')
 
         const response: IApiResponse = {
             success: true,
             message: 'User signed up successfully',
+            data: user
+        }
+
+        res.status(201).json(response)
+
+    })
+
+    onboard = asyncHandler(async (req, res) => {
+        const { email } = req.query as { email: string }
+        const { username, phone, occupation, date_of_birth, status, maximum_daily_capacity } = req.body 
+        
+        const payload: CreateProfileDTO = {
+            username,
+            status,
+            occupation,
+            phone,
+            maximum_daily_capacity,
+            date_of_birth
+        }
+        const user = await this.userService.profile(email, payload)
+
+        const response: IApiResponse = {
+            success: true,
+            message: 'User onboarding completed',
             data: user
         }
 

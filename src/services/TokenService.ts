@@ -11,21 +11,21 @@ export class TokenService {
    * @param user
    * @returns accessToken and refreshToken
    */
-    static async issueAuthTokens(user: { id: string; email: string }) {
+    static async issueAuthTokens(user: { id: string; email: string, sn: bigint }) {
         const { accessToken, refreshToken } = this.buildTokens(user); // call private static fn
         await setCache(`refresh-token:${user.id}`, refreshToken, secretConfig.refreshTokenExpiry);
         return { accessToken, refreshToken };
     }
 
-    private static buildTokens(user: { id: string; email: string }) {
+    private static buildTokens(user: { id: string; email: string, sn: bigint }) {
         const accessToken = generateToken(
-            { user_id: user.id, email: user.email },
+            { user_id: user.id, email: user.email, user_sn: user.sn },
             secretConfig.secretKey,
             '30m'
         );
         
         const refreshToken = generateToken(
-            { user_id: user.id, email: user.email },
+            { user_id: user.id, email: user.email, user_sn: user.sn },
             secretConfig.refreshSecret,
             secretConfig.refreshTokenExpiry
         );

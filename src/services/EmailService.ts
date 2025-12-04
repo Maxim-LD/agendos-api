@@ -2,7 +2,7 @@ import { config } from "../config";
 import { renderTemplate } from "../templates/renderTemplates";
 import { logger } from "../utils/logger";
 import { IUser } from "../types/user";
-import { sendEmail, SendMailOptions } from "../utils/mail_sender";
+import { sendEmail, SendMailOptions } from "../utils/mail-sender";
 import { TokenService } from "./TokenService";
 import { Knex } from "knex";
 
