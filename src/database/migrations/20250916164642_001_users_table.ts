@@ -21,7 +21,7 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp("updated_at").defaultTo(knex.fn.now()).nullable();
 
     // Task related
-    table.string("maximum_daily_capacity").nullable().defaultTo(8) // hours
+    table.integer("maximum_daily_capacity").nullable().defaultTo(8) // hours
 
     // Unique constraints
     table.unique(["email"], "users_email_unique");

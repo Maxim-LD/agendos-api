@@ -6,24 +6,42 @@ export const validator = (bodySchema: Schema | null, paramsSchema: Schema | null
     try {
         // Validate req body if body schema is only provided
         if (bodySchema) {
-            const bodyResult = bodySchema.validate(req.body, { abortEarly: false }) 
+            const bodyResult = bodySchema.validate(req.body, { abortEarly: false });
             if (bodyResult.error) {
-                const errorMessage = bodyResult.error.details.map((error) => error.message).join(', ')
-                return next(new ValidationError(errorMessage))
+                const errorMessage = bodyResult.error.details.map((error) => error.message).join(', ');
+                return next(new ValidationError(errorMessage));
             }
             req.body = bodyResult.value
         }
 
-        next()
+        // Validate req params if params schema is provided
+        if (paramsSchema) {
+            const paramsResult = paramsSchema.validate(req.params, { abortEarly: false });
+            if (paramsResult.error) {
+                const errorMessage = paramsResult.error.details.map((error) => error.message).join(', ');
+                return next(new ValidationError(errorMessage));
+            }
+            Object.assign(req, { validatedParams: paramsResult.value });
+        }
 
+        // Validate req query if query schema is provided
+        if (querySchema) {
+            const queryResult = querySchema.validate(req.query, { abortEarly: false });
+            if (queryResult.error) {
+                const errorMessage = queryResult.error.details.map((error) => error.message).join(', ');
+                return next(new ValidationError(errorMessage));
+            }
+            Object.assign(req, { validatedQuery: queryResult.value });
+        }
+
+        next();
     } catch (error) {
-        let message = 'Something went wrong!'
-        if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: string}))
-        throw new Error(message)
+        next(error);
     }
 }
 
 const registerSchema = Joi.object({
+    fullname:Joi.string().required(),
     email: Joi.string().trim().email().required().messages({
         "string.email": "Invalid email format!",
         "any.required": "Email is required!",
@@ -42,10 +60,13 @@ const registerSchema = Joi.object({
     confirm_password: Joi.string().valid(Joi.ref('password')).required().messages({
         'any.only': 'Password does not match!'
     }),
-    fullname:Joi.string().required(),
+})
+
+const onboardSchema = Joi.object({
     username: Joi.string().trim().empty('').allow(null).optional(),
     status: Joi.string().trim().empty('').allow(null).optional(),
     occupation: Joi.string().trim().empty('').allow(null).optional(),
+    maximum_daily_capacity: Joi.number().empty('').allow(null).optional(),
     // profile_picture: Joi.string().uri().allow('', null).optional(),
     phone: Joi.string()
         .trim()
@@ -63,8 +84,7 @@ const loginSchema = Joi.object({
             "string.email": "Invalid email format!",
             "string.empty": "Email or phone cannot be empty"
         }),
-        Joi.string()
-            .trim()
+        Joi.string().trim()
             .pattern(/^(?:\+234|234|0)[789][01]\d{8}$/)
             .replace(/^(?:\+234|234)/, '0')
             .messages({
@@ -95,7 +115,23 @@ const emailSchema = Joi.object({
     })
 })
 
+const taskSchema = Joi.object({
+    title: Joi.string().required().messages({
+        "string.empty": "Title cannot be empty",
+        "any.required": "Title is required",
+    }),
+    description: Joi.string().allow('', null).optional(),
+    reminders: Joi.boolean().default(false).optional(),
+    progress_interval: Joi.string().valid('once', 'daily', 'weekly', 'monthly').default('once').optional().messages({
+        'any.only': 'Progress interval must be one of [once, daily, weekly, monthly]'
+    }),
+    urgency: Joi.string().valid('low', 'medium', 'high').default('medium').optional().messages({
+        'any.only': 'Urgency must be one of [low, medium, high]'
+    })
+})
+
 export const validateRegister = validator(registerSchema, null, null)
+export const validateOnboard = validator(onboardSchema, null, emailSchema)
 export const validateLogin = validator(loginSchema, null, null)
 export const validateEmail = validator(emailSchema, null, null)
-
+export const validateTask = validator(taskSchema, null, null)
