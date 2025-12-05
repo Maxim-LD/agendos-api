@@ -8,14 +8,14 @@ export async function up(knex: Knex): Promise<void> {
     // --- Relationships ---
     table.bigInteger("user_sn").unsigned().notNullable();
     table.bigInteger("streak_chain_sn").unsigned().nullable();
-    table.bigInteger("project_sn").unsigned().nullable(); 
+    table.uuid("project_id").nullable(); 
 
     // --- Core Task Data ---
     table.string("title", 100).notNullable();
     table.text("description").nullable();
 
     table.integer("effort_estimate_minutes").unsigned().notNullable().defaultTo(0);
-    table.enum("energy_required", ["low", "medium", "high"]).notNullable().defaultTo("medium");
+    table.enum("energy_required", ["low", "medium", "high"]).notNullable().defaultTo("medium"); // How focused is the user to take the task 
 
     table.date("scheduled_date").nullable();
     table.time("scheduled_time").nullable();
@@ -49,8 +49,8 @@ export async function up(knex: Knex): Promise<void> {
       
     // REQUIRED ADDITION: Foreign Key to projects table
     table
-      .foreign("project_sn")
-      .references("sn")
+      .foreign("project_id")
+      .references("id")
       .inTable("projects")
       .onDelete("SET NULL"); // When a project is deleted, tasks are un-assigned.
   });
