@@ -11,7 +11,7 @@ export interface IApiResponse<T = any> {
 }
 
 export interface ILoginResponse {
-    user: IUser;
+    user?: IUser;
     accessToken: string;
     refreshToken: string;
 }

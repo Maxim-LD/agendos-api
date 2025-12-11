@@ -21,7 +21,7 @@ export class AuthService {
         this.authRepository = new AuthRepository()
     }
 
-    async registerUser(userInput: CreateUserDTO): Promise<IUser> {
+    async registerUser(userInput: CreateUserDTO): Promise<ILoginResponse> {
         return await db.transaction(async (trx) => {  
             
             const userPayload: CreateUserDTO  = {
@@ -47,10 +47,12 @@ export class AuthService {
 
             await this.authRepository.createAuthRecord(authInput)
 
+            const { accessToken, refreshToken } = await TokenService.issueAuthTokens(newUser)
+
             // Send welcome email
             await EmailService.sendWelcomeEmail(newUser)
 
-            return newUser
+            return { user: newUser, accessToken, refreshToken }
         })    
     }
 

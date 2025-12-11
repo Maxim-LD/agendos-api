@@ -25,7 +25,7 @@ export class AuthController {
 
         if (password !== confirm_password) throw new BadRequestError('Passwords does not match!')
 
-        const user = await this.authService.registerUser({
+        const { user, accessToken, refreshToken} = await this.authService.registerUser({
             fullname,
             email,
             password,
@@ -33,10 +33,23 @@ export class AuthController {
 
         if (!user) throw new BadRequestError('User account creation failed!')
 
+        const isProduction = config.nodeEnv === 'production'
+        
+        // Store refresh token in cookies
+        res.cookie("refresh-token", refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: '/'
+        });
+
         const response: IApiResponse = {
             success: true,
             message: 'User signed up successfully',
-            data: user
+            data: {
+                user,
+                accessToken
+            }
         }
 
         res.status(201).json(response)
@@ -55,7 +68,7 @@ export class AuthController {
             maximum_daily_capacity,
             date_of_birth
         }
-        const user = await this.userService.profile(email, payload)
+        const user = await this.userService.createProfile(email, payload)
 
         const response: IApiResponse = {
             success: true,
