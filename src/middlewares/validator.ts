@@ -110,7 +110,7 @@ const loginSchema = Joi.object({
 const emailSchema = Joi.object({
     email: Joi.string().trim().email().messages({
         "string.email": "Invalid email format!",
-        "string.empty": "Email or cannot be empty",
+        "string.empty": "Email cannot be empty",
         "any.required": "Email is required!",
     })
 })

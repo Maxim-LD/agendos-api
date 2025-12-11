@@ -1,7 +1,7 @@
 import db from "../config/db";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateProfileDTO, IUser, UpdateUserDTO } from "../types/user";
-import { NotFoundError } from "../utils/errors";
+import { BadRequestError, NotFoundError } from "../utils/errors";
 
 export class UserService {
     userRepository: UserRepository
@@ -10,7 +10,7 @@ export class UserService {
         this.userRepository = new UserRepository()
     }
 
-    async profile(email: string, payload: CreateProfileDTO): Promise<IUser | null> {
+    async createProfile(email: string, payload: CreateProfileDTO): Promise<IUser | null> {
         return await db.transaction(async (trx) => {
             const existingUser = await this.userRepository.findBy('email', email, trx)
             if (!existingUser) throw new NotFoundError('User not found, Please sign up again!')
@@ -31,7 +31,7 @@ export class UserService {
             )
 
             if (!updatedUsers || updatedUsers.length === 0) {
-                throw new NotFoundError('User could not be updated or found after update.');
+                throw new BadRequestError('User could not be updated');
             }
 
             return updatedUsers[0];
