@@ -1,8 +1,0 @@
-onlyBuiltDependencies:
-  - bcrypt
-
-packages:
-  # all packages in sub-directories of packages/
-  - 'packages/*'
-  # all packages in sub-directories of components/
-  - 'components/*'
