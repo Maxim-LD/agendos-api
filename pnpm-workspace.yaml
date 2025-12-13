@@ -1,0 +1,10 @@
+onlyBuiltDependencies:
+  - bcrypt
+
+
+feat(auth): implement password reset functionality with validation
+
+- Introduced a reset password schema in the validator middleware to validate email, new password, and reset token.
+- Updated the AuthController to include password reset logic with validation.
+- Modified the auth router to include validation for the reset password route.
+- Enhanced the AuthService to log the generated reset token for debugging purposes.
