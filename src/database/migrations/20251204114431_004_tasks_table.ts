@@ -6,19 +6,18 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid("id").notNullable().unique();         // external UUID
 
     // --- Relationships ---
-    table.bigInteger("user_sn").unsigned().notNullable();
-    table.bigInteger("streak_chain_sn").unsigned().nullable();
+    table.uuid("user_id").notNullable();
     table.uuid("project_id").nullable(); 
+    table.bigInteger("streak_chain_sn").unsigned().nullable();
 
     // --- Core Task Data ---
     table.string("title", 100).notNullable();
     table.text("description").nullable();
 
     table.integer("effort_estimate_minutes").unsigned().notNullable().defaultTo(0);
-    table.enum("energy_required", ["low", "medium", "high"]).notNullable().defaultTo("medium"); // How focused is the user to take the task 
+    table.enum("energy_required", ["light", "moderate", "intense"]).notNullable().defaultTo("moderate"); // How focused or determined is the user to take the task 
 
-    table.date("scheduled_date").nullable();
-    table.time("scheduled_time").nullable();
+    table.date("due_date").nullable();
 
     // --- Status and Progress ---
     table.boolean("reminders").notNullable().defaultTo(false);
@@ -36,8 +35,8 @@ export async function up(knex: Knex): Promise<void> {
     table.index(["title", "created_at"], "tasks_title_created_at_index");
 
     table
-      .foreign("user_sn")
-      .references("sn")
+      .foreign("user_id")
+      .references("id")
       .inTable("users")
       .onDelete("CASCADE");
     

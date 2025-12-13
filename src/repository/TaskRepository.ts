@@ -16,7 +16,7 @@ export class TaskRepository extends BaseRepository<ITask> {
             updated_at: new Date(),
         }
 
-        return this.create(taskData)
+        return this.create(taskData, trx)
     }
 
     async updateTask() {

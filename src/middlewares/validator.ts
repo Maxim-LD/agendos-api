@@ -158,9 +158,30 @@ const onboardTaskSchema = Joi.object({
     })
 })
 
+const addTaskSchema = Joi.object({
+    title: Joi.string().required().messages({
+        "string.empty": "Title cannot be empty",
+        "any.required": "Title is required",
+    }),
+    description: Joi.string().trim().allow('', null).optional(),
+    reminders: Joi.boolean().default(true).allow('', null).optional(),
+    progress_interval: Joi.string().valid('once', 'daily', 'weekly', 'monthly').default('once').optional().messages({
+        'any.only': 'Progress interval must be one of [once, daily, weekly, monthly]'
+    }),
+    energy_required: Joi.string().valid('light', 'moderate', 'intense').default('moderate').optional().messages({
+        'any.only': 'Energy required must be one of [light, medium, intense]'
+    }),
+    urgency: Joi.string().valid('low', 'medium', 'high').default('medium').optional().messages({
+        'any.only': 'Urgency must be one of [low, medium, high]'
+    }),
+    effort_estimate_minutes: Joi.number().allow('', null).optional(),
+    due_date: Joi.date().max('now').empty('').allow(null).optional(),
+})
+
 export const validateRegister = validator(registerSchema, null, null)
 export const validateOnboard = validator(onboardSchema, null, emailSchema)
 export const validateLogin = validator(loginSchema, null, null)
 export const validateEmail = validator(emailSchema, null, null)
 export const validateOnboardTask = validator(onboardTaskSchema, null, null)
+export const validateAddTask = validator(addTaskSchema, null, null)
 export const validatePasswordReset = validator(resetSchema, null, null)

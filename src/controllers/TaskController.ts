@@ -2,7 +2,6 @@ import { AuthRequest } from "../middlewares/auth-middleware";
 import { asyncHandler } from "../middlewares/error-handler";
 import { TaskService } from "../services/TaskService";
 import { CreateTaskDTO } from "../types/task";
-import { BadRequestError } from "../utils/errors";
 
 export class TaskController {
     private taskService: TaskService
@@ -11,25 +10,28 @@ export class TaskController {
         this.taskService = new TaskService()
     }
 
-    createTask = asyncHandler(async (req: AuthRequest, res) => {
-        const { user_sn } = req.user as { user_sn: bigint }
+    createOnboardTask = asyncHandler(async (req: AuthRequest, res) => {
+
+    })
+
+    createTask = asyncHandler(async (req: AuthRequest, res) => {        
+        const { user_id } = req.user as { user_id: string }
         const { project_id: projectIdParam } = req.params
         const {
             title, description, effort_estimate_minutes,
-            energy_required, reminders, scheduled_date,
-            scheduled_time, progress_interval, urgency
+            energy_required, reminders, due_date,
+            progress_interval, urgency
         } = req.body
     
         const taskPayload: CreateTaskDTO = {
-            user_sn,
+            user_id,
             project_id: projectIdParam,
             title,
             description,
             effort_estimate_minutes,
             energy_required,
             reminders,
-            scheduled_date,
-            scheduled_time,
+            due_date,
             progress_interval,
             urgency
         }
