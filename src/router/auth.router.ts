@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/AuthController";
-import { validateEmail, validateLogin, validateRegister } from "../middlewares/validator";
+import { validateEmail, validateLogin, validatePasswordReset, validateRegister } from "../middlewares/validator";
 import { authRateLimit } from "../middlewares/rate-limiter";
 import { protect } from "../middlewares/auth-middleware";
 
@@ -13,5 +13,5 @@ authRouter.post('/send-email-verification', protect, authRateLimit, validateEmai
 authRouter.get('/verify-email', authRateLimit, authController.verifyUserEmail)
 authRouter.post('/login', authRateLimit, validateLogin, authController.login)
 authRouter.post('/forgot-password', authRateLimit, authController.forgotPasswordLink)
-authRouter.post('/reset-password', authRateLimit, authController.resetPassword)
+authRouter.post('/reset-password', authRateLimit, validatePasswordReset, authController.resetPassword)
 authRouter.post('/refresh-token', authController.refreshAccessToken)

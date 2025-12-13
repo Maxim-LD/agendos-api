@@ -115,6 +115,34 @@ const emailSchema = Joi.object({
     })
 })
 
+const resetSchema = Joi.object({
+    email: Joi.string().trim().email().messages({
+        "string.email": "Invalid email format!",
+        "string.empty": "Email cannot be empty",
+        "any.required": "Email is required!",
+    }),
+    newPassword: Joi.string()
+        .min(6)
+        .pattern(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/)
+        .required()
+        .messages({
+            "string.min": "Password must be at least 6 characters",
+            "string.empty": "Password cannot be empty",
+            "any.required": "Password is required",
+            "string.pattern.base": "Password must contain letters, numbers, and special characters",
+        }),
+    // confirm_password: Joi.string().valid(Joi.ref('password')).required().messages({
+    //     'any.only': 'Password does not match!'
+    // }),
+    resetToken: Joi.string()
+        .required()
+        .messages({
+            "string.empty": "Token cannot be empty",
+            "any.required": "Token is required",
+        })
+
+})
+
 const taskSchema = Joi.object({
     title: Joi.string().required().messages({
         "string.empty": "Title cannot be empty",
@@ -135,3 +163,4 @@ export const validateOnboard = validator(onboardSchema, null, emailSchema)
 export const validateLogin = validator(loginSchema, null, null)
 export const validateEmail = validator(emailSchema, null, null)
 export const validateTask = validator(taskSchema, null, null)
+export const validatePasswordReset = validator(resetSchema, null, null)
