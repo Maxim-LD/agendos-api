@@ -143,7 +143,7 @@ const resetSchema = Joi.object({
 
 })
 
-const taskSchema = Joi.object({
+const onboardTaskSchema = Joi.object({
     title: Joi.string().required().messages({
         "string.empty": "Title cannot be empty",
         "any.required": "Title is required",
@@ -162,5 +162,5 @@ export const validateRegister = validator(registerSchema, null, null)
 export const validateOnboard = validator(onboardSchema, null, emailSchema)
 export const validateLogin = validator(loginSchema, null, null)
 export const validateEmail = validator(emailSchema, null, null)
-export const validateTask = validator(taskSchema, null, null)
+export const validateOnboardTask = validator(onboardTaskSchema, null, null)
 export const validatePasswordReset = validator(resetSchema, null, null)
