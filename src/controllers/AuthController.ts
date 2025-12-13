@@ -131,6 +131,8 @@ export class AuthController {
     resetPassword = asyncHandler(async (req, res) => {
         const { email, resetToken, newPassword } = req.body
 
+        //if (newPassword !== confirmNewPassword) throw new BadRequestError('Passwords does not match!')
+
         await this.authService.handleResetPassword(email, resetToken, newPassword)
 
         return res.status(200).json({
