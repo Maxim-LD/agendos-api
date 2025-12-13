@@ -85,6 +85,8 @@ export class AuthService {
             
             // 2. Generate token
             const { resetToken, resetTokenExpiry } = await TokenService.issueResetToken()
+            console.log(resetToken);
+            
             const hashedToken = await hashPassword(resetToken)
 
             // 3. Update auth table
