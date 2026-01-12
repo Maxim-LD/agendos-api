@@ -11,7 +11,8 @@ const app = express()
 
 const allowedOrigins = [
     "http://localhost:3000",
-    'https://agendos.vercel.app'
+    'https://agendos.vercel.app',
+    'http://agendos.local'
 ]
 
 // Trust proxy
