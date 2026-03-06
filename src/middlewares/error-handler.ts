@@ -1,15 +1,16 @@
 import { NextFunction, Request, Response } from "express"
 import { IApiResponse } from "../types/api-response"
-import { AppError } from "../utils/errors"
+import { AppError } from "../errors/app-error"
+import { ErrorCodes } from "../errors/error-codes"
 import { config } from "../config"
 import { logger } from "../utils/logger"
 
 export const notFoundHandler = (req: Request, res: Response): void => {
     const response: IApiResponse = {
         success: false,
-        message: `Route ${req.originalUrl} not found!`,
+        message: `Route '${req.originalUrl}' not found!`,
         error: {
-            code: 'NOT_FOUND'
+            code: ErrorCodes.NOT_FOUND
         }
     }
     res.status(404).json(response)
@@ -27,7 +28,7 @@ export const asyncHandler = (fn: ExpressHandler) => {
 export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction): void => { 
     let statusCode = 500
     let message = 'Internal server error!'
-    let errorCode = 'INTERNAL_SERVER_ERROR'
+    let errorCode = ErrorCodes.INTERNAL_SERVER_ERROR
     let isOperational = false
 
     if (error instanceof AppError) {
