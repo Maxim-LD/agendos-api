@@ -8,6 +8,7 @@ const taskController = new TaskController()
 
 export const taskRouter = Router()
 
-taskRouter.post('/new', protect, authRateLimit, validateOnboardTask, taskController.createTask)
-taskRouter.post('/fresh', protect, authRateLimit, validateAddTask, taskController.createTask)
-
+// taskRouter.post('/', protect, authRateLimit, validateOnboardTask, taskController.createTask)
+taskRouter.post('/', protect, authRateLimit, validateAddTask, taskController.createTask)
+taskRouter.get('/', protect, authRateLimit, taskController.getUserTasks)
+taskRouter.get('/:id', protect, authRateLimit, taskController.getUserTaskById)

@@ -12,12 +12,29 @@ export class TaskRepository extends BaseRepository<ITask> {
         const taskData: Partial<ITask> = {
             id: uuidv4(),
             ...input,
+            status: 'not_started',
+            is_active: true,
             created_at: new Date(),
             updated_at: new Date(),
         }
 
         return this.create(taskData, trx)
     }
+
+    async getDailyEffortSum(userSn: bigint, date: Date | string, trx: Knex.Transaction): Promise<number> {
+        const query = trx ? trx(this.tableName) : this.db(this.tableName);
+
+        const result = await query
+            .sum('effort_estimate_minutes as total')
+            .where({ 
+                user_sn: userSn, 
+                due_date: date, 
+                is_active: true     
+            })
+            .first();
+
+    return result?.total ? parseInt(result.total as string) : 0;
+}
 
     async updateTask() {
 
