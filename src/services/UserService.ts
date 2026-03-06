@@ -1,7 +1,8 @@
 import db from "../config/db";
+import { badRequestError, notFoundError } from "../errors/factories";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateProfileDTO, IUser, UpdateUserDTO } from "../types/user";
-import { BadRequestError, NotFoundError } from "../utils/errors";
+
 
 export class UserService {
     userRepository: UserRepository
@@ -13,7 +14,9 @@ export class UserService {
     async createProfile(email: string, payload: CreateProfileDTO): Promise<IUser | null> {
         return await db.transaction(async (trx) => {
             const existingUser = await this.userRepository.findBy('email', email, trx)
-            if (!existingUser) throw new NotFoundError('User not found, Please sign up again!')
+            if (!existingUser) throw notFoundError('User not found, Please sign up again!')
+
+            // TODO - check if username or name or phone exists
 
             const profilePayload: CreateProfileDTO = {
                 username: payload.username,
@@ -31,7 +34,7 @@ export class UserService {
             )
 
             if (!updatedUsers || updatedUsers.length === 0) {
-                throw new BadRequestError('User could not be updated');
+                throw badRequestError('User could not be updated');
             }
 
             return updatedUsers[0];
@@ -41,7 +44,7 @@ export class UserService {
     async updateProfile(userId: string, payload: UpdateUserDTO): Promise<IUser | null> {
         return await db.transaction(async (trx) => {
             const existingUser = await this.userRepository.findById(userId)
-            if (!existingUser) throw new NotFoundError('User not found!')
+            if (!existingUser) throw notFoundError('User not found!')
 
             const updatedUsers = await this.userRepository.update(
                 { id: userId },
@@ -57,7 +60,7 @@ export class UserService {
             ) 
 
             if (!updatedUsers || updatedUsers.length === 0) {
-                throw new NotFoundError('User could not be updated or found after update.');
+                throw notFoundError('User could not be updated or found after update.');
             }
 
             return updatedUsers[0];

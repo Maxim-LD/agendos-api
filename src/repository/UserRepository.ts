@@ -8,7 +8,7 @@ export class UserRepository extends BaseRepository<IUser> {
         super('users', 'sn')
     }
 
-    async findBy(column: string, value: string, trx?: Knex.Transaction): Promise<IUser | null> {
+    async findBy(column: string, value: string | number, trx?: Knex.Transaction): Promise<IUser | null> {
         const query = this.db(this.tableName).where(column, value).first()
         if (trx) query.transacting(trx)
         return query
@@ -16,6 +16,7 @@ export class UserRepository extends BaseRepository<IUser> {
 
     async createUser(input: CreateUserDTO, trx?: any): Promise<IUser | null> {
         const userData: Partial<IUser> = {
+            // TODO: To remove sn from response
             id: uuidv4(),
            ...input,
             created_at: new Date(),

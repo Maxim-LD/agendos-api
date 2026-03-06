@@ -59,6 +59,8 @@ export abstract class BaseRepository<T> { // This class marked (abstract) is not
     }
 
     async findAll(
+        key: string,
+        value: any,
         limit = 10,
         offset = 0,
         orderBy = 'created_at',
@@ -68,6 +70,7 @@ export abstract class BaseRepository<T> { // This class marked (abstract) is not
         const query = this.db(this.tableName)
             .limit(limit)
             .offset(offset)
+            .where(key, value)
             .orderBy(orderBy, order)
         if (trx) query.transacting(trx)
         return query
