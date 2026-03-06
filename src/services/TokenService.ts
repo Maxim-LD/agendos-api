@@ -2,8 +2,8 @@ import crypto from 'crypto'
 import { secretConfig } from "../config";
 import { getCache, setCache } from "../utils/caching";
 import { generateToken, verifyToken } from "../utils/token";
-import { ForbiddenError, InvalidTokenError } from '../utils/errors';
 import { UserRepository } from '../repository/UserRepository';
+import { forbiddenError, invalidTokenError } from '../errors/factories';
 
 export class TokenService {
     /**
@@ -11,21 +11,38 @@ export class TokenService {
    * @param user
    * @returns accessToken and refreshToken
    */
-    static async issueAuthTokens(user: { id: string; email: string }) {
+    static async issueAuthTokens(
+        user: {
+            sn: bigint,
+            id: string;
+            email: string
+        }
+    ) {
         const { accessToken, refreshToken } = this.buildTokens(user); // call private static fn
-        await setCache(`refresh-token:${user.id}`, refreshToken, secretConfig.refreshTokenExpiry);
+        await setCache(
+            `refresh-token:${user.id}`,
+            refreshToken,
+            secretConfig.refreshTokenExpiry
+        );
+
         return { accessToken, refreshToken };
     }
 
-    private static buildTokens(user: { id: string; email: string, sn?: bigint }) {
+    private static buildTokens(
+        user: {
+            id: string;
+            email: string,
+            sn?: bigint
+        }
+    ) {
         const accessToken = generateToken(
-            { user_id: user.id, email: user.email },
+            { id: user.id, email: user.email, sn: user.sn },
             secretConfig.secretKey,
             '30m'
         );
         
         const refreshToken = generateToken(
-            { user_id: user.id, email: user.email },
+            { id: user.id, email: user.email },
             secretConfig.refreshSecret,
             secretConfig.refreshTokenExpiry
         );
@@ -33,9 +50,9 @@ export class TokenService {
         return { accessToken, refreshToken };
     }
 
-    static async issueEmailToken({ user_id, email }: { user_id: string; email: string; }): Promise<string> {
+    static async issueEmailToken(user: { id: string; email: string; }): Promise<string> {
         const token = generateToken(
-            { user_id, email },
+            { user_id: user.id, email: user.email },
             secretConfig.emailSecret,
             '1h'
         )
@@ -52,17 +69,17 @@ export class TokenService {
     static async handleRefreshAccessToken(token: string) {
         const decoded = verifyToken(token, secretConfig.refreshSecret)
 
-        const cachedToken = await getCache(`refresh-token:${decoded.user_id}`)
-        if (!cachedToken || cachedToken !== token ) throw new InvalidTokenError('Invalid refresh token!')
+        const cachedResult = await getCache<string>(`refresh-token:${decoded.user_id}`)
+        if (!cachedResult || cachedResult.data !== token ) throw invalidTokenError('Invalid refresh token!')
         
         const newToken = generateToken(
-            { user_id: decoded.user_id, email: decoded.email },
+            { user_id: decoded.user_id, email: decoded.email, user_sn: decoded.user_sn },
             secretConfig.secretKey,
             '30m'
         )
 
         const dbUser = await new UserRepository().findById(decoded.user_id)
-        if (!dbUser) throw new ForbiddenError('Invalid user!')
+        if (!dbUser) throw forbiddenError('Invalid user!')
         
         return { user: dbUser, token: newToken }
     }

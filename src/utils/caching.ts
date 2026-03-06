@@ -1,9 +1,15 @@
 import { redis } from "../config/redis"
 import { logger } from "./logger"
 
-export const getCache = async <T = unknown>(key: string): Promise<T | null> => {
+export const getCache = async <T = any>(key: string): Promise<{ data: T; fromCache: true; } | null> => {
     const data = await redis.get(key)
-    return data ? (JSON.parse(data) as T) : null
+    if (!data) {
+        return null;
+    }
+    return {
+        data: JSON.parse(data) as T,
+        fromCache: true,
+    };
 }
 
 export const setCache = async (key: string, value: unknown, expiry = 3600): Promise<void> => {
