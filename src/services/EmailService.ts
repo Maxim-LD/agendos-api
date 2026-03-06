@@ -32,7 +32,7 @@ export class EmailService {
     }
 
     static async sendVerificationMail(user: IUser, trx?: Knex.Transaction) {
-        const token = await TokenService.issueEmailToken({ user_id: user.id, email: user.email })
+        const token = await TokenService.issueEmailToken({ id: user.id, email: user.email })
         const verificationLink = `${config.baseUrl}/auth/verify-email?token=${token}`;
         
         const html = renderTemplate('verify-email', {

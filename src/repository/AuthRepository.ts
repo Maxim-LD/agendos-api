@@ -2,7 +2,7 @@ import { CreateAuthDTO, IAuth } from "../types/auth";
 import { hashPassword } from "../utils/hash";
 import { BaseRepository } from "./BaseRepository";
 import { v4 as uuidv4 } from "uuid";
-import { BadRequestError } from "../utils/errors";
+import { badRequestError } from "../errors/factories";
 
 export class AuthRepository extends BaseRepository<IAuth> {
     constructor() {
@@ -13,9 +13,9 @@ export class AuthRepository extends BaseRepository<IAuth> {
         return await this.db.transaction(async (trx) => {
             // Get provider record
             const provider = await this.db('providers').where('name', input.provider_name).first();
-            if (!provider) throw new BadRequestError("Unknown provider type!");
+            if (!provider) throw badRequestError("Unknown provider type!");
     
-            if (!input.secret) throw new BadRequestError("Missing secret!")
+            if (!input.secret) throw badRequestError("Missing secret!")
             const hashedSecret = await hashPassword(input.secret)
             
             const authdata: Partial<IAuth> = {

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
 import { asyncHandler } from "./error-handler";
-import { InvalidTokenError } from "../utils/errors";
+import { unauthorizedError } from "../errors/factories";
 import { getCache } from "../utils/caching";
 import { verifyToken } from "../utils/token";
 import { secretConfig } from "../config";
@@ -12,13 +12,13 @@ export interface AuthRequest extends Request {
     token?: string;
 }
 
-export const protect = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+export const protect = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {  
     const token = req.header('Authorization')?.replace('Bearer ', '')
-    if (!token) throw new InvalidTokenError('Access denied. No token provided!')
+    if (!token) throw unauthorizedError('Access denied. No token provided!')
     
     // Check if the token is blacklisted
     const isBlacklisted = await getCache(`blacklist:${token}`)
-    if (isBlacklisted) throw new InvalidTokenError('Token has been invalidated. Please log in again!')
+    if (isBlacklisted) throw unauthorizedError('Token has been invalidated. Please log in again!')
     
     const decoded = verifyToken(token, secretConfig.secretKey)
 

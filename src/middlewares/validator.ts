@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Joi, { Schema } from "joi";
-import { ValidationError } from "../utils/errors";
+import { validationError } from "../errors/factories";
 
 export const validator = (bodySchema: Schema | null, paramsSchema: Schema | null, querySchema: Schema | null) => (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -9,7 +9,7 @@ export const validator = (bodySchema: Schema | null, paramsSchema: Schema | null
             const bodyResult = bodySchema.validate(req.body, { abortEarly: false });
             if (bodyResult.error) {
                 const errorMessage = bodyResult.error.details.map((error) => error.message).join(', ');
-                return next(new ValidationError(errorMessage));
+                return next(validationError(errorMessage));
             }
             req.body = bodyResult.value
         }
@@ -19,7 +19,7 @@ export const validator = (bodySchema: Schema | null, paramsSchema: Schema | null
             const paramsResult = paramsSchema.validate(req.params, { abortEarly: false });
             if (paramsResult.error) {
                 const errorMessage = paramsResult.error.details.map((error) => error.message).join(', ');
-                return next(new ValidationError(errorMessage));
+                return next(validationError(errorMessage));
             }
             Object.assign(req, { validatedParams: paramsResult.value });
         }
@@ -29,7 +29,7 @@ export const validator = (bodySchema: Schema | null, paramsSchema: Schema | null
             const queryResult = querySchema.validate(req.query, { abortEarly: false });
             if (queryResult.error) {
                 const errorMessage = queryResult.error.details.map((error) => error.message).join(', ');
-                return next(new ValidationError(errorMessage));
+                return next(validationError(errorMessage));
             }
             Object.assign(req, { validatedQuery: queryResult.value });
         }
@@ -175,8 +175,40 @@ const addTaskSchema = Joi.object({
         'any.only': 'Urgency must be one of [low, medium, high]'
     }),
     effort_estimate_minutes: Joi.number().allow('', null).optional(),
-    due_date: Joi.date().max('now').empty('').allow(null).optional(),
+    due_date: Joi.date().min('now').empty('').allow(null).optional(),
 })
+
+// --- Learning Path Schema ---
+const createPathSchema = Joi.object({
+    title: Joi.string().trim().max(150).required().messages({
+        "string.empty": "Title cannot be empty",
+        "any.required": "Title is required",
+        "string.max": "Title cannot exceed 150 characters"
+    }),
+    goal_statement: Joi.string().trim().allow('', null).optional(),
+    category: Joi.string().trim().max(100).allow('', null).optional()
+});
+
+// --- Learning Drill Schema ---
+const createDrillSchema = Joi.object({
+    concept_name: Joi.string().trim().max(255).required().messages({
+        "string.empty": "Concept name is required",
+        "any.required": "Concept name is required"
+    }),
+    the_trick: Joi.string().trim().required().messages({
+        "string.empty": "The 'Trick' (mnemonic/tip) is required",
+        "any.required": "The 'Trick' is required"
+    }),
+    practice_routine: Joi.string().trim().required().messages({
+        "string.empty": "Practice routine instructions are required",
+        "any.required": "Practice routine is required"
+    }),
+    effort_estimate_minutes: Joi.number().integer().min(1).required().messages({
+        "number.min": "Effort estimate must be at least 1 minute",
+        "any.required": "Effort estimate is required for capacity planning"
+    }),
+    streak_chain_id: Joi.number().integer().allow(null).optional()
+});
 
 export const validateRegister = validator(registerSchema, null, null)
 export const validateOnboard = validator(onboardSchema, null, emailSchema)
@@ -185,3 +217,5 @@ export const validateEmail = validator(emailSchema, null, null)
 export const validateOnboardTask = validator(onboardTaskSchema, null, null)
 export const validateAddTask = validator(addTaskSchema, null, null)
 export const validatePasswordReset = validator(resetSchema, null, null)
+export const validateCreatePath = validator(createPathSchema, null, null);
+export const validateCreateDrill = validator(createDrillSchema, null, null);

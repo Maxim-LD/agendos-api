@@ -1,37 +1,34 @@
 import { config } from "../config";
-import { AuthRequest } from "../middlewares/auth-middleware";
 import { asyncHandler } from "../middlewares/error-handler";
 import { AuthService } from "../services/AuthService";
 import { TokenService } from "../services/TokenService";
 import { UserService } from "../services/UserService";
 import { IApiResponse } from "../types/api-response";
-import { CreateProfileDTO, UpdateUserDTO } from "../types/user";
-import { BadRequestError, UnauthorizedError, ValidationError } from "../utils/errors";
+import { CreateProfileDTO } from "../types/user";
+import { badRequestError, unauthorizedError, validationError } from "../errors/factories";
 
 
 export class AuthController {
     private authService: AuthService
     private userService: UserService
-    private tokenService: TokenService
 
     constructor() {
         this.authService = new AuthService()
         this.userService = new UserService()
-        this.tokenService = new TokenService()
     }
 
     signUp = asyncHandler(async (req, res): Promise<void> => {
         const { fullname, email, password, confirm_password } = req.body
 
-        if (password !== confirm_password) throw new BadRequestError('Passwords does not match!')
+        if (password !== confirm_password) badRequestError('Passwords does not match!')
 
-        const { user, accessToken, refreshToken} = await this.authService.registerUser({
+        const { user, accessToken, refreshToken } = await this.authService.registerUser({
             fullname,
             email,
             password,
         })
 
-        if (!user) throw new BadRequestError('User account creation failed!')
+        if (!user) badRequestError('User account creation failed!')
 
         const isProduction = config.nodeEnv === 'production'
         
@@ -89,7 +86,7 @@ export class AuthController {
         } else if (identifier) {
             user = await this.authService.handleLogin('phone', identifier, password);
         } else {
-            throw new UnauthorizedError("Invalid credentials.");
+            throw unauthorizedError("Invalid credentials.");
         }
 
         const isProduction = config.nodeEnv === 'production'
@@ -118,7 +115,7 @@ export class AuthController {
         if (email) {
             await this.authService.handleForgotPassword('email', email)
         } else {
-            throw new UnauthorizedError('Invalid user')
+            unauthorizedError('Invalid user')
         }
 
         return res.status(200).json({
@@ -131,7 +128,7 @@ export class AuthController {
     resetPassword = asyncHandler(async (req, res) => {
         const { email, resetToken, newPassword } = req.body
 
-        //if (newPassword !== confirmNewPassword) throw new BadRequestError('Passwords does not match!')
+        //if (newPassword !== confirmNewPassword) badRequestError('Passwords does not match!')
 
         await this.authService.handleResetPassword(email, resetToken, newPassword)
 
@@ -155,10 +152,10 @@ export class AuthController {
 
     verifyUserEmail = asyncHandler(async (req, res) => {
         const { token } = req.query
-        if (!token) throw new ValidationError('Token is required!')
+        if (!token) validationError('Token is required!')
             
         const tokenValue = Array.isArray(token) ? token[0] : token;
-        if (typeof tokenValue !== 'string') throw new BadRequestError('Invalid token format')
+        if (typeof tokenValue !== 'string') throw badRequestError('Invalid token format')
             
         await this.authService.verifyEmailToken(tokenValue)
             
@@ -170,7 +167,7 @@ export class AuthController {
 
     refreshAccessToken = asyncHandler(async (req, res) => {
         const refreshToken = req.cookies['refresh-token']
-        if (!refreshToken) throw new UnauthorizedError('Token is required!')
+        if (!refreshToken) unauthorizedError('Token is required!')
         
         const { user, token } = await TokenService.handleRefreshAccessToken(refreshToken)
 

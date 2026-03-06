@@ -14,7 +14,7 @@ export const globalRatelimit = rateLimit({
 })
 
 export const authRateLimit = rateLimit({
-    windowMs: config.rateLimit.windowMS, // 15 minutes
+    windowMs: config.rateLimit.windowMS,
     max: 20, // limit each IP to 5 requests per windowMs for auth endpoints
     message: {
         success: false,

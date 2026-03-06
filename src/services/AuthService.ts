@@ -4,7 +4,7 @@ import { AuthRepository } from "../repository/AuthRepository";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateAuthDTO } from "../types/auth";
 import { CreateUserDTO, IUser } from "../types/user";
-import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
+import { badRequestError, conflictError, notFoundError, unauthorizedError } from "../errors/factories";
 import { verifyToken } from "../utils/token";
 import { comparePassword, hashPassword } from "../utils/hash";
 import { ILoginResponse } from "../types/api-response";
@@ -21,28 +21,25 @@ export class AuthService {
         this.authRepository = new AuthRepository()
     }
 
-    async registerUser(userInput: CreateUserDTO): Promise<ILoginResponse> {
+    async registerUser(data: CreateUserDTO): Promise<ILoginResponse> {
         return await db.transaction(async (trx) => {  
             
             const userPayload: CreateUserDTO  = {
-                fullname: userInput.fullname,
-                email: userInput.email,
+                fullname: data.fullname,
+                email: data.email,
             };
             
-            // 1. Check if user exists
-            const existingUser = await this.userRepository.findBy('email', userInput.email, trx)
-            if (existingUser) throw new ConflictError('User email already exist!')
+            const existingUser = await this.userRepository.findBy('email', data.email, trx)
+            if (existingUser) throw conflictError('User email already exist!')
                          
-            // 2. Create user
             const newUser = await this.userRepository.createUser(userPayload, trx)
-            if (!newUser) throw new BadRequestError("User creation failed");
+            if (!newUser) throw badRequestError("User creation failed");
 
-            // 3. Create auth record
             const authInput: CreateAuthDTO = {
                 user_sn: newUser.sn,
                 provider_name: 'email',
-                provider_identity: userInput.email,
-                secret: userInput.password
+                provider_identity: data.email,
+                secret: data.password
             }
 
             await this.authRepository.createAuthRecord(authInput)
@@ -60,15 +57,15 @@ export class AuthService {
         return db.transaction(async (trx) => {
             // 1. Check if user exist
             const user = await this.userRepository.findOne(key, value, trx)
-            if (!user) throw new NotFoundError('User does not exist!')
+            if (!user) throw notFoundError('User does not exist!')
             
             // 2. Check auth record for password match
             const auth = await this.authRepository.findOne('user_sn', user.sn, trx)
-            if (!auth) throw new NotFoundError('No auth record for user!')
+            if (!auth) throw notFoundError('No auth record for user!')
 
             // 3. Compare password
             const isMatch = await comparePassword(secret, auth.hashed_secret)
-            if (!isMatch) throw new UnauthorizedError('Invalid credentials provided!')
+            if (!isMatch) throw unauthorizedError('Invalid credentials provided!')
             
             // 4. Generate auth tokens
             const { accessToken, refreshToken } = await TokenService.issueAuthTokens(user)
@@ -81,11 +78,11 @@ export class AuthService {
         return await db.transaction(async (trx) => {
             // 1. Check if user exists
             const user = await this.userRepository.findOne(key, value, trx)
-            if (!user) throw new NotFoundError('Account not found!')
+            if (!user) throw notFoundError('Account not found!')
             
             // 2. Generate token
             const { resetToken, resetTokenExpiry } = await TokenService.issueResetToken()
-            console.log(resetToken);
+            // console.log(resetToken);
             
             const hashedToken = await hashPassword(resetToken)
 
@@ -106,16 +103,16 @@ export class AuthService {
 
     private async validateResetToken(providedToken: string, storedTokenHash: string | null, expiry: Date | null) {
         if (!storedTokenHash || !expiry) {
-            throw new BadRequestError('Invalid or expired token.');
+            throw badRequestError('Invalid or expired token.');
         }
 
         if (new Date() > expiry) {
-            throw new UnauthorizedError('Token has expired!');
+            throw unauthorizedError('Token has expired!');
         }
 
         const isTokenValid = await comparePassword(providedToken, storedTokenHash);
         if (!isTokenValid) {
-            throw new UnauthorizedError('Invalid token provided.');
+            throw unauthorizedError('Invalid token provided.');
         }
     }
 
@@ -124,7 +121,7 @@ export class AuthService {
             // 1. Find the auth record for the user
             const authRecord = await this.authRepository.findOne('provider_identity', email, trx)
             if (!authRecord || !authRecord.reset_token || !authRecord.reset_token_expiry) {
-                throw new BadRequestError('No token set for user.')
+                throw badRequestError('No token set for user.')
             }
 
             // 2. Validate the reset token against the stored values
@@ -148,10 +145,10 @@ export class AuthService {
 
     async handleEmailVerification(email: string) {
         const user = await this.userRepository.findBy('email', email)
-        if (!user) throw new NotFoundError('Account not found!')
+        if (!user) throw notFoundError('Account not found!')
         
         if (user.is_email_verified) {
-            throw new ConflictError('Email already verified')
+            throw conflictError('Email already verified')
         }
 
         await EmailService.sendVerificationMail(user)
