@@ -6,8 +6,8 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid("id").notNullable().unique();         // external UUID
 
     // --- Relationships ---
-    table.uuid("user_id").notNullable();
-    table.uuid("project_id").nullable(); 
+    table.bigInteger("user_sn").unsigned().notNullable();
+    table.bigInteger("project_sn").unsigned().nullable(); 
     table.bigInteger("streak_chain_sn").unsigned().nullable();
 
     // --- Core Task Data ---
@@ -33,12 +33,12 @@ export async function up(knex: Knex): Promise<void> {
 
     // --- Indexes and Foreign Keys ---
     table.index(["title", "created_at"], "tasks_title_created_at_index");
-
+    
     table
-      .foreign("user_id")
-      .references("id")
-      .inTable("users")
-      .onDelete("CASCADE");
+        .foreign("user_sn")
+        .references("sn")
+        .inTable("users")
+        .onDelete("CASCADE");
     
     table
       .foreign("streak_chain_sn")
@@ -48,8 +48,8 @@ export async function up(knex: Knex): Promise<void> {
       
     // REQUIRED ADDITION: Foreign Key to projects table
     table
-      .foreign("project_id")
-      .references("id")
+      .foreign("project_sn")
+      .references("sn")
       .inTable("projects")
       .onDelete("SET NULL"); // When a project is deleted, tasks are un-assigned.
   });

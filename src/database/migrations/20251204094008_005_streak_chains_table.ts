@@ -2,7 +2,7 @@ import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
     return knex.schema.createTable("streak_chains", (table) => {
-        table.bigIncrements("sn").primary();
+        table.bigIncrements("sn").unsigned().primary();
         table.uuid("id").notNullable().unique();
 
         table.bigInteger("user_sn").unsigned().notNullable();
