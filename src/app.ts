@@ -12,7 +12,7 @@ const app = express()
 const allowedOrigins = [
     "http://localhost:3000",
     'https://agendos.vercel.app',
-    'http://agendos.local'
+    'http://agendos.local',
 ]
 
 // Trust proxy
@@ -38,6 +38,7 @@ app.use(cors({
 app.use(globalRatelimit)
 
 app.use('/api/v1', router)
+app
 
 app.get('/', (req, res) => {
     return res.status(200).json({

@@ -16,7 +16,7 @@ if (config.nodeEnv === 'production') {
     loggerTransports.push(new transports.Console({
         format: combine(
             colorize(),
-            simple()
+            simple(),
         )
     }));
 }
