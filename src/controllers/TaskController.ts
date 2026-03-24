@@ -24,6 +24,10 @@ export class TaskController {
             energy_required, reminders, due_date,
             progress_interval, urgency
         } = req.body
+
+        if (!projectIdParam || Array.isArray(projectIdParam)) {
+            throw badRequestError('Invalid task ID');
+        }
     
         const taskPayload: CreateTaskDTO = {
             user_id: user.id,
@@ -65,6 +69,10 @@ export class TaskController {
     getUserTaskById = asyncHandler(async (req: AuthRequest, res) => {
         const user = req.user as IUser
         const { id } = req.params 
+
+        if (!id || Array.isArray(id)) {
+            throw badRequestError('Invalid ID');
+        }
 
         const task = await this.taskService.handleGetUserTaskById(id, user)
 

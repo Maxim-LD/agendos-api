@@ -211,7 +211,7 @@ const createDrillSchema = Joi.object({
 });
 
 export const validateRegister = validator(registerSchema, null, null)
-export const validateOnboard = validator(onboardSchema, null, emailSchema)
+export const validateOnboard = validator(onboardSchema, null, null)
 export const validateLogin = validator(loginSchema, null, null)
 export const validateEmail = validator(emailSchema, null, null)
 export const validateOnboardTask = validator(onboardTaskSchema, null, null)

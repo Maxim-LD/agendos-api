@@ -3,7 +3,7 @@ import { secretConfig } from "../config";
 import { AuthRepository } from "../repository/AuthRepository";
 import { UserRepository } from "../repository/UserRepository";
 import { CreateAuthDTO } from "../types/auth";
-import { CreateUserDTO, IUser } from "../types/user";
+import { CreateUserDTO, UserResponseDTO } from "../types/user";
 import { badRequestError, conflictError, notFoundError, unauthorizedError } from "../errors/factories";
 import { verifyToken } from "../utils/token";
 import { comparePassword, hashPassword } from "../utils/hash";
@@ -44,12 +44,23 @@ export class AuthService {
 
             await this.authRepository.createAuthRecord(authInput)
 
-            const { accessToken, refreshToken } = await TokenService.issueAuthTokens(newUser)
+            const { accessToken, refreshToken } = await TokenService.issueAuthTokens(newUser);
 
             // Send welcome email
-            await EmailService.sendWelcomeEmail(newUser)
+            await EmailService.sendWelcomeEmail(newUser);
 
-            return { user: newUser, accessToken, refreshToken }
+            const userResponse: UserResponseDTO = {
+                id: newUser.id,
+                fullname: newUser.fullname,
+                email: newUser.email,
+                username: newUser.username,
+                status: newUser.status,
+                occupation: newUser.occupation,
+                is_email_verified: newUser.is_email_verified,
+                maximum_daily_capacity: newUser.maximum_daily_capacity,
+            };
+
+            return { user: userResponse, accessToken, refreshToken }
         })    
     }
 
@@ -68,9 +79,20 @@ export class AuthService {
             if (!isMatch) throw unauthorizedError('Invalid credentials provided!')
             
             // 4. Generate auth tokens
-            const { accessToken, refreshToken } = await TokenService.issueAuthTokens(user)
+            const { accessToken, refreshToken } = await TokenService.issueAuthTokens(user);
             
-            return { user, accessToken, refreshToken }
+            const userResponse: UserResponseDTO = {
+                id: user.id,
+                fullname: user.fullname,
+                email: user.email,
+                username: user.username,
+                status: user.status,
+                occupation: user.occupation,
+                is_email_verified: user.is_email_verified,
+                maximum_daily_capacity: user.maximum_daily_capacity,
+            };
+            
+            return { user: userResponse, accessToken, refreshToken };
         })
     }
 

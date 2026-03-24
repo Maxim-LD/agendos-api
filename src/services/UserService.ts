@@ -1,7 +1,7 @@
 import db from "../config/db";
 import { badRequestError, notFoundError } from "../errors/factories";
 import { UserRepository } from "../repository/UserRepository";
-import { CreateProfileDTO, IUser, UpdateUserDTO } from "../types/user";
+import { CreateProfileDTO, IUser, UpdateUserDTO, UserResponseDTO } from "../types/user";
 
 
 export class UserService {
@@ -11,12 +11,13 @@ export class UserService {
         this.userRepository = new UserRepository()
     }
 
-    async createProfile(email: string, payload: CreateProfileDTO): Promise<IUser | null> {
+    async createProfile(email: string, payload: CreateProfileDTO): Promise<UserResponseDTO | null> {
         return await db.transaction(async (trx) => {
             const existingUser = await this.userRepository.findBy('email', email, trx)
-            if (!existingUser) throw notFoundError('User not found, Please sign up again!')
+            if (!existingUser) throw notFoundError('User not found, Please sign up!')
 
-            // TODO - check if username or name or phone exists
+            // TODO: check if username or name or phone exists
+            // TODO: to prevent max_daily_capacity more then normal
 
             const profilePayload: CreateProfileDTO = {
                 username: payload.username,
@@ -37,7 +38,18 @@ export class UserService {
                 throw badRequestError('User could not be updated');
             }
 
-            return updatedUsers[0];
+            const userResponse: UserResponseDTO = {
+                id: updatedUsers[0].id,
+                fullname: updatedUsers[0].fullname,
+                email: updatedUsers[0].email,
+                username: updatedUsers[0].username,
+                status: updatedUsers[0].status,
+                occupation: updatedUsers[0].occupation,
+                is_email_verified: updatedUsers[0].is_email_verified,
+                maximum_daily_capacity: updatedUsers[0].maximum_daily_capacity,
+            };
+
+            return userResponse;
         })
     }
 

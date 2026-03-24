@@ -1,4 +1,4 @@
-import { IUser } from "./user";
+import { UserResponseDTO } from "./user";
 
 export interface IApiResponse<T = any> {
     success: boolean,
@@ -11,7 +11,7 @@ export interface IApiResponse<T = any> {
 }
 
 export interface ILoginResponse {
-    user?: IUser;
+    user?: UserResponseDTO;
     accessToken: string;
     refreshToken: string;
 }

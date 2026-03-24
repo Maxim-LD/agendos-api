@@ -6,6 +6,7 @@ import router from './router'
 import compression from 'compression'
 import { errorHandler, notFoundHandler } from './middlewares/error-handler'
 import { globalRatelimit } from './middlewares/rate-limiter'
+import { setupSwagger } from './swagger'
 
 const app = express()
 
@@ -13,6 +14,7 @@ const allowedOrigins = [
     "http://localhost:3000",
     'https://agendos.vercel.app',
     'http://agendos.local',
+    "http://localhost:3200"
 ]
 
 // Trust proxy
@@ -37,10 +39,12 @@ app.use(cors({
 
 app.use(globalRatelimit)
 
-app.use('/api/v1', router)
-app
+// Setup Swagger documentation
+setupSwagger(app)
 
-app.get('/', (req, res) => {
+app.use('/api/v1', router)
+
+app.get('/api/v1/health', (req, res) => {
     return res.status(200).json({
         success: true,
         message: 'Welcome to Agendos Backend service'

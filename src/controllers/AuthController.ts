@@ -4,8 +4,9 @@ import { AuthService } from "../services/AuthService";
 import { TokenService } from "../services/TokenService";
 import { UserService } from "../services/UserService";
 import { IApiResponse } from "../types/api-response";
-import { CreateProfileDTO } from "../types/user";
+import { CreateProfileDTO, IUser } from "../types/user";
 import { badRequestError, unauthorizedError, validationError } from "../errors/factories";
+import { AuthRequest } from "../middlewares/auth-middleware";
 
 
 export class AuthController {
@@ -53,8 +54,8 @@ export class AuthController {
 
     })
 
-    onboard = asyncHandler(async (req, res) => {
-        const { email } = req.query as { email: string }
+    onboard = asyncHandler(async (req: AuthRequest, res) => {
+        const authenticatedUser = req.user as IUser
         const { username, phone, occupation, date_of_birth, status, maximum_daily_capacity } = req.body 
         
         const payload: CreateProfileDTO = {
@@ -65,7 +66,7 @@ export class AuthController {
             maximum_daily_capacity,
             date_of_birth
         }
-        const user = await this.userService.createProfile(email, payload)
+        const user = await this.userService.createProfile(authenticatedUser.email, payload)
 
         const response: IApiResponse = {
             success: true,
@@ -107,6 +108,10 @@ export class AuthController {
                 accessToken: user.accessToken
             }
         });
+    })
+
+    logout = asyncHandler(async (req, res) => {
+        
     })
 
     forgotPasswordLink = asyncHandler(async (req, res) => {
