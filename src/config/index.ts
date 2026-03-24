@@ -14,9 +14,12 @@ interface Config {
         maxRequests: number
     }
     smtp: {
+        port: number
+        host: string
         email: string
         password: string
-        secure: boolean
+        service: string
+        login: string
     },
     redisUrl: string
 }
@@ -72,9 +75,13 @@ export const config: Config = {
         maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100') // limit each IP to 100 requests per windowMs
     },
     smtp: {
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        host: process.env.SMTP_HOST || '',
         email: process.env.SMTP_EMAIL || '',
         password: process.env.SMTP_PASSWORD || '',
-        secure: process.env.SMTP_SECURE === 'true'
+        service: process.env.SMTP_SERVICE || '',
+        login: process.env.SMTP_LOGIN || ''
+
     }
 }
 

@@ -12,9 +12,12 @@ export interface SendMailOptions {
 export const sendEmail = async (options: SendMailOptions, trx?: Knex.Transaction): Promise<void> => {
     try {
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            service: config.smtp.service,
+            host: config.smtp.host,
+            port: config.smtp.port,
+            secure: false,
             auth: {
-                user: config.smtp.email,
+                user: config.smtp.login,
                 pass: config.smtp.password
             }
         })
