@@ -35,6 +35,21 @@ export interface UpdateUserDTO {
     date_of_birth?: Date;
 }
 
+/**
+ * Data Transfer Object for sending user data to the client.
+ * This represents the public-facing User object.
+ */
+export interface UserResponseDTO {
+    id: string;
+    fullname: string;
+    email: string;
+    username?: string;
+    status?: string;
+    occupation?: string;
+    is_email_verified: boolean;
+    maximum_daily_capacity: number;
+}
+
 export interface CreateProfileDTO {
     username?: string;
     status?: string;

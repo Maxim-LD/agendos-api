@@ -1,6 +1,7 @@
 import { redis } from "../config/redis"
 import { logger } from "./logger"
 
+// <> indicates shape of data or object to be returned
 export const getCache = async <T = any>(key: string): Promise<{ data: T; fromCache: true; } | null> => {
     const data = await redis.get(key)
     if (!data) {
