@@ -20,6 +20,7 @@ interface Config {
         password: string
         service: string
         login: string
+        apiKey: string
     },
     redisUrl: string
 }
@@ -80,8 +81,8 @@ export const config: Config = {
         email: process.env.SMTP_EMAIL || '',
         password: process.env.SMTP_PASSWORD || '',
         service: process.env.SMTP_SERVICE || '',
-        login: process.env.SMTP_LOGIN || ''
-
+        login: process.env.SMTP_LOGIN || '',
+        apiKey: process.env.SMTP_API_KEY || ''
     }
 }
 
