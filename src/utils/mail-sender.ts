@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer'
 import { config } from '../config'
 import { logger } from './logger'
 import { Knex } from 'knex'
@@ -11,26 +10,31 @@ export interface SendMailOptions {
 
 export const sendEmail = async (options: SendMailOptions, trx?: Knex.Transaction): Promise<void> => {
     try {
-        const transporter = nodemailer.createTransport({
-            host: config.smtp.host,
-            port: config.smtp.port,
-            secure: true,
-            connectionTimeout: 10000,
-            auth: {
-                user: config.smtp.login,
-                pass: config.smtp.password
-            }
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': config.smtp.apiKey,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: {
+                    name: 'AGENDOS',
+                    email: config.smtp.email
+                },
+                to: [{ email: options.to }],
+                subject: options.subject,
+                htmlContent: options.html
+            })
         })
 
-        const mailOptions = {
-            from: `'AGENDOS' <${config.smtp.email}>`,
-            to: options.to,
-            subject: options.subject,
-            html: options.html
+        if (!response.ok) {
+            const errorBody = await response.text()
+            throw new Error(`Brevo API error (${response.status}): ${errorBody}`)
         }
 
-        const info = await transporter.sendMail(mailOptions)
-        logger.info("Email sent:", { response: info.response })
+        const result = await response.json()
+        logger.info("Email sent via Brevo API:", { messageId: result.messageId })
 
     } catch (error) {
         if (error instanceof Error) {
