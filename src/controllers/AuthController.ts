@@ -1,4 +1,4 @@
-import { config } from "../config";
+import { config, secretConfig } from "../config";
 import { asyncHandler } from "../middlewares/error-handler";
 import { AuthService } from "../services/AuthService";
 import { TokenService } from "../services/TokenService";
@@ -38,7 +38,8 @@ export class AuthController {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax',
-            path: '/'
+            path: '/',
+            maxAge: secretConfig.refreshTokenExpiry * 1000 // seconds → ms
         });
 
         const response: IApiResponse = {
@@ -97,7 +98,8 @@ export class AuthController {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax',
-            path: '/'
+            path: '/',
+            maxAge: secretConfig.refreshTokenExpiry * 1000 // seconds → ms
         });
             
         return res.status(200).json({

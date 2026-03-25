@@ -69,18 +69,19 @@ export class TokenService {
     static async handleRefreshAccessToken(token: string) {
         const decoded = verifyToken(token, secretConfig.refreshSecret)
 
-        const cachedResult = await getCache<string>(`refresh-token:${decoded.user_id}`)
+        const cachedResult = await getCache<string>(`refresh-token:${decoded.id}`)
         if (!cachedResult || cachedResult.data !== token ) throw invalidTokenError('Invalid refresh token!')
         
-        const newToken = generateToken(
-            { user_id: decoded.user_id, email: decoded.email, user_sn: decoded.user_sn },
+        const dbUser = await new UserRepository().findById(decoded.id)
+        if (!dbUser) throw forbiddenError('Invalid user!')
+
+        // Issue fresh access token only — refresh token stays the same
+        const newAccessToken = generateToken(
+            { id: decoded.id, email: decoded.email, sn: decoded.sn },
             secretConfig.secretKey,
             '30m'
         )
-
-        const dbUser = await new UserRepository().findById(decoded.user_id)
-        if (!dbUser) throw forbiddenError('Invalid user!')
         
-        return { user: dbUser, token: newToken }
+        return { user: dbUser, token: newAccessToken }
     }
 }
