@@ -16,9 +16,16 @@ export class TaskService {
     }
 
     async handleCreateTask(data: CreateTaskDTO): Promise<ITask> {
+        let user_sn = data.user_sn;
+        if (!user_sn && data.user_id) {
+            const user = await this.userRepository.findById(data.user_id);
+            if (!user) throw notFoundError('User not found');
+            user_sn = user.sn;
+        }
+
         return await db.transaction(async (trx) => {
             const taskPayload: CreateTaskDTO = {
-                user_sn: data.user_sn,
+                user_sn: user_sn,
                 // user_id: data.user_id,
                 title: data.title,
                 description: data.description,
@@ -67,7 +74,7 @@ export class TaskService {
         const cachedKey = `tasks:${user.id}`
         const cachedResult = await getCache<ITask[]>(cachedKey)
         if (!cachedResult) {
-            const userTasks = await this.taskRepository.findAll('user_sn', user.sn);
+            const userTasks = await this.taskRepository.findAll('user_sn', isExisting.sn);
             if (!userTasks || userTasks.length === 0) throw notFoundError("No tasks found for user");
                    
             await setCache(cachedKey, userTasks, 3600)
@@ -79,8 +86,11 @@ export class TaskService {
     }
 
     async handleGetUserTaskById(id: string, user: IUser): Promise<ITask | null> { 
+        const isExisting = await this.userRepository.findById(user.id)
+        if (!isExisting) throw notFoundError("User does not exist!")
+
         const task = await this.taskRepository.findById(id)
-        if (!task || (task.user_sn !== user.sn)) throw notFoundError('Task not found for user!')
+        if (!task || (task.user_sn !== isExisting.sn)) throw notFoundError('Task not found for user!')
         
         return task
     }
