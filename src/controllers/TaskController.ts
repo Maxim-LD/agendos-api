@@ -25,9 +25,9 @@ export class TaskController {
             progress_interval, urgency
         } = req.body
 
-        if (!projectIdParam || Array.isArray(projectIdParam)) {
-            throw badRequestError('Invalid task ID');
-        }
+        // if (projectIdParam || Array.isArray(projectIdParam)) {
+        //     throw badRequestError('Invalid task ID');
+        // }
     
         const taskPayload: CreateTaskDTO = {
             user_id: user.id,
